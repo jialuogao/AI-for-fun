@@ -44,7 +44,7 @@ public class GameApp {
 			game(data1, data2);
 		}else if(inputCommand.equalsIgnoreCase("playing")) {
 			
-			String AIversion = "db-1.9.txt";
+			String AIversion = "db-5.8.txt";
 			ArrayList<String> AIdata = new ArrayList<String>();
 			readData(AIdata,AIversion);
 			
