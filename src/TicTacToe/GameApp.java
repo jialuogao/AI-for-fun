@@ -184,7 +184,7 @@ public class GameApp {
 			if(isTie) {
 				trainingTie(logO,logX,data,playerSymbol==1);
 			}
-			writeData(data,dbStartingFile);
+			//writeData(data,dbStartingFile);
 		}
 	}
 
