@@ -26,6 +26,7 @@ public class GameApp {
 		
 		// UI
 		System.out.println("Input \"training\" to start training");
+		System.out.println("Input \"training with\" to start training with set version");
 		System.out.println("Input \"gaming\" to start play");
 		System.out.println("Input \"playing\" to start play");
 		String inputCommand = input.nextLine();
@@ -605,7 +606,7 @@ public class GameApp {
 						gameover = true;
 						tieGames++;
 						// change O
-						trainingTie(logO,logX,data,start);
+						//trainingTie(logO,logX,data,start);
 					} else if(step == -1) {
 						gameover = true;
 						ffGames++;
