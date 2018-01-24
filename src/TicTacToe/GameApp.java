@@ -14,7 +14,7 @@ public class GameApp {
 		int[][] board = new int[3][3];
 
 		// read rule db
-		double dbVersion = 4.4;
+		double dbVersion = 0.0;
 		String dbStartingFile = "db-" + ("" + dbVersion).substring(0, 3) + ".txt";
 		ArrayList<String> data = new ArrayList<String>();
 		boolean hasData = readData(data, dbStartingFile);
@@ -334,8 +334,11 @@ public class GameApp {
 			int dbsteplasto = Integer.parseInt(contentlasto[1]);
 			String dblinelasto = data.get(dbindexlasto);
 			String[] dblineSplitlasto = dblinelasto.split(" ");
+			for(int i = 0;i<9;i++) {
+				dblineSplitlasto[i + 2]=""+ Math.max(0, (Integer.parseInt(dblineSplitlasto[i + 2]) - 1000));
+			}
 			dblineSplitlasto[dbsteplasto + 2] = ""
-					+ Math.max(0, (Integer.parseInt(dblineSplitlasto[dbsteplasto + 2]) + 500));
+					+ Math.max(0, (Integer.parseInt(dblineSplitlasto[dbsteplasto + 2]) + 2000));
 			String newdblinelasto = "";
 			for (String part : dblineSplitlasto) {
 				newdblinelasto = newdblinelasto + part + " ";
@@ -424,8 +427,11 @@ public class GameApp {
 			int dbsteplastx = Integer.parseInt(contentlastx[1]);
 			String dblinelastx = data.get(dbindexlastx);
 			String[] dblineSplitlastx = dblinelastx.split(" ");
+			for(int i = 0;i<9;i++) {
+				dblineSplitlastx[i + 2]=""+ Math.max(0, (Integer.parseInt(dblineSplitlastx[i + 2]) - 1000));
+			}
 			dblineSplitlastx[dbsteplastx + 2] = ""
-					+ Math.max(0, (Integer.parseInt(dblineSplitlastx[dbsteplastx + 2]) + 500));
+					+ Math.max(0, (Integer.parseInt(dblineSplitlastx[dbsteplastx + 2]) + 2000));
 			String newdblinelastx = "";
 			for (String part : dblineSplitlastx) {
 				newdblinelastx = newdblinelastx + part + " ";
@@ -597,15 +603,15 @@ public class GameApp {
 					else {
 						OwinGames++;
 					}
-					System.out.println("log o");
-					for(String o:logO) {
-						System.out.println(o);
-					}
-					System.out.println("log x");
-					for(String x:logX) {
-						System.out.println(x);
-					}
-					System.out.println("end log");
+//					System.out.println("log o");
+//					for(String o:logO) {
+//						System.out.println(o);
+//					}
+//					System.out.println("log x");
+//					for(String x:logX) {
+//						System.out.println(x);
+//					}
+//					System.out.println("end log");
 				}
 				else {
 					if (player) {
@@ -631,6 +637,17 @@ public class GameApp {
 					if (isWin) {
 						if (playerSymbol == 1) {
 							OwinGames++;
+							
+//							System.out.println("log o");
+//							for(String o:logO) {
+//								System.out.println(o);
+//							}
+//							System.out.println("log x");
+//							for(String x:logX) {
+//								System.out.println(x);
+//							}
+//							System.out.println("end log");
+							
 						} else if (playerSymbol == 2) {
 							XwinGames++;
 						}
