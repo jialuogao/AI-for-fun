@@ -23,7 +23,7 @@ public class GameApp {
 			data = initData();
 			writeData(data, dbStartingFile);
 		}
-
+		
 		// UI
 		System.out.println("Input \"training\" to start training");
 		System.out.println("Input \"gaming\" to start play");
@@ -31,10 +31,22 @@ public class GameApp {
 		String inputCommand = input.nextLine();
 		if (inputCommand.equalsIgnoreCase("training")) {
 			dbVersion = training(dbVersion, data);
-		} else if (inputCommand.equalsIgnoreCase("gaming")) {
+		} 
+		else if(inputCommand.equalsIgnoreCase("training with")) {
+			String trainingFile = "db-0.0.txt";
+			ArrayList<String> data2 = new ArrayList<String>();
+			boolean hasData2 = readData(data2,trainingFile);
+			if(!hasData2) {
+				System.out.println("Date does not exist");
+			}
+			else {
+				dbVersion = training(dbVersion, data, data2);				
+			}
+		}
+		else if (inputCommand.equalsIgnoreCase("gaming")) {
 			// game
-			String P1 = "db-5.8.txt";
-			String P2 = "db-5.8.txt";
+			String P1 = "db-9.9.txt";
+			String P2 = "db-4.4.txt";
 			ArrayList<String> data1 = new ArrayList<String>();
 			readData(data1, P1);
 			ArrayList<String> data2 = new ArrayList<String>();
@@ -441,7 +453,7 @@ public class GameApp {
 	}
 	// train the AI
 	public static double training(double dbVersion, ArrayList<String> data) {
-		
+
 		int OwinGames = 0;
 		int XwinGames = 0;
 		int tieGames = 0;
@@ -542,8 +554,120 @@ public class GameApp {
 		System.out.println(ffGames);
 		return dbVersion;
 	}
+	//training with version
+	public static double training(double dbVersion, ArrayList<String> data1,ArrayList<String> data2) {
+		
+		ArrayList<String> data = data1;
+		int OwinGames = 0;
+		int XwinGames = 0;
+		int tieGames = 0;
+		int totalGames = 0;
+		int ffGames = 0;
+		int trainingIter = 15;
+		for (int n = 0; n < trainingIter; n++) {
+			// play 10000 games per iteration
+			for (int i = 0; i < 100000; i++) {
+				totalGames++;
+				
+				ArrayList<String> logO = new ArrayList<String>();
+				ArrayList<String> logX = new ArrayList<String>();
+				// play the game and change "data"
+				boolean gameover = false;
+				int[][] board = new int[3][3];
+				// pick a random player to start
+				// O-true X-false
+				boolean start = randGenerator.nextBoolean();
+				if(!start) {
+					data = data2;
+				}
+				boolean player = start;
+				while (!gameover) {
+					// read in the board
+					String gameStatus = readGameStatus(board);
+					if(!player)
+						gameStatus = reverseStatus(gameStatus);
+					// search for strategy
+					String[] strategy = searchStrategy(gameStatus, data);
+					// play
+					// Symbol that a player use
+					// 1 for O
+					// 2 for X
+					int playerSymbol = 0;
+					if (player) {
+						playerSymbol = 1;
+					} else {
+						playerSymbol = 2;
+					}				
+					// find the right step to play
+					int step = calculateStep(strategy, board);
+					// no place resulted tieGames
+					if (step == -999) {
+						gameover = true;
+						tieGames++;
+						// change O
+						trainingTie(logO,logX,data,start);
+					} else if(step == -1) {
+						gameover = true;
+						ffGames++;
+						if(player) {
+							XwinGames++;
+							if(logO.size()>0 && logX.size()>0)
+								trainingWin(logO,logX,data,2);
+						}
+						else {
+							OwinGames++;
+							if(logO.size()>0 && logX.size()>0)
+								trainingWin(logO,logX,data,1);
+						}
+					}
+					// not tie
+					else {
+						if (player) {
+							logO.add(gameStatus + " " + step);
+						} else {
+							logX.add(gameStatus + " " + step);
+						}
+						
+						// convert step into x,y coordinate location
+						int[] location = convertLocation(step);
+						// play
+						board = playStep(board, location, playerSymbol);
+						// check win condition
+						ArrayList<int[]> lastlocation = new ArrayList<int[]>();
+						boolean isWin = isWin(board, location, playerSymbol, lastlocation);
+						// change strategy based on W/L result
+						if (isWin) {
+							if(logO.size()>0 && logX.size()>0)
+								trainingWin(logO,logX,data,playerSymbol);
+							if(playerSymbol ==1) {
+								OwinGames++;
+							}else if(playerSymbol ==2) {
+								XwinGames++;
+							}
+							gameover = true;
+						}
+						if(player) {
+							data=data2;
+						}
+						else {
+							data=data1;
+						}
+						player = !player;
+					}
+				}
+			}
+			// create new version for data file
+			dbVersion += 0.1;
+			writeData(data1, "db-" + ("" + dbVersion).substring(0, 3) + ".txt");
+		}
+		System.out.println(OwinGames);
+		System.out.println(XwinGames);
+		System.out.println(tieGames);
+		System.out.println(totalGames);
+		System.out.println(ffGames);
+		return dbVersion;
+	}
 
-	
 	public static void game(ArrayList<String> data1, ArrayList<String> data2) {
 
 		int OwinGames = 0;
