@@ -14,7 +14,7 @@ public class GameApp {
 		int[][] board = new int[3][3];
 
 		// read rule db
-		double dbVersion = 0.0;
+		double dbVersion = 5.0;
 		String dbStartingFile = "db-" + ("" + dbVersion).substring(0, 3) + ".txt";
 		ArrayList<String> data = new ArrayList<String>();
 		boolean hasData = readData(data, dbStartingFile);
@@ -46,8 +46,8 @@ public class GameApp {
 		}
 		else if (inputCommand.equalsIgnoreCase("gaming")) {
 			// game
-			String P1 = "db-9.9.txt";
-			String P2 = "db-4.4.txt";
+			String P1 = "db-0.0.txt";
+			String P2 = "db-6.4.txt";
 			ArrayList<String> data1 = new ArrayList<String>();
 			readData(data1, P1);
 			ArrayList<String> data2 = new ArrayList<String>();
@@ -57,7 +57,7 @@ public class GameApp {
 			game(data1, data2);
 		}else if(inputCommand.equalsIgnoreCase("playing")) {
 			
-			String AIversion = "db-5.8.txt";
+			String AIversion = "db-5.0.txt";
 			ArrayList<String> AIdata = new ArrayList<String>();
 			readData(AIdata,AIversion);
 			
@@ -145,6 +145,7 @@ public class GameApp {
 						// play
 						if(AIlocation[0]<0||AIlocation[0]>2||AIlocation[1]<0||AIlocation[1]>2) {
 							System.out.println("badbadbad");
+							//out of range
 						}
 						board = playStep(board, AIlocation, AISymbol);
 						System.out.println("AI played: "+AIlocation[0]+","+AIlocation[1]);
@@ -174,7 +175,7 @@ public class GameApp {
 						else if(playerSymbol==2)
 							logX.add(gameStatus+" "+step);
 						if(board[location[1]][location[0]]!=0) {
-							System.out.println("you made a invalid move, please restart the game");
+							System.out.println("you made an invalid move, please restart the game");
 							isFair = false;
 							break;
 						}
@@ -403,9 +404,12 @@ public class GameApp {
 				}
 				data.set(dbindex, newdbline);
 			}
+			
 			if(logO.size()==0) {
+				//
 				System.out.println();
 			}
+			
 			String lasto = logO.get(logO.size() - 1);
 			String[] contentlasto = lasto.split(" ");
 			int dbindexlasto = Integer.valueOf(contentlasto[0], 3);
@@ -452,6 +456,25 @@ public class GameApp {
 			data.set(dbindexlastx, newdblinelastx);
 		}
 	}
+	//train with version if lose to the version
+	private static void trainingWithLose(ArrayList<String> logNew,ArrayList<String> data) {
+		String lastnew = logNew.get(logNew.size() - 1);
+		String[] contentlastnew = lastnew.split(" ");
+		int dbindexlastnew = Integer.valueOf(contentlastnew[0], 3);
+		int dbsteplastnew = Integer.parseInt(contentlastnew[1]);
+		String dblinelastnew = data.get(dbindexlastnew);
+		String[] dblineSplitlastnew = dblinelastnew.split(" ");
+		for(int i = 0;i<9;i++) {
+			dblineSplitlastnew[i + 2]=""+ Math.max(0, (Integer.parseInt(dblineSplitlastnew[i + 2]) - 500));
+		}
+		dblineSplitlastnew[dbsteplastnew + 2] = ""
+				+ Math.max(0, (Integer.parseInt(dblineSplitlastnew[dbsteplastnew + 2]) - 4500));
+		String newdblinelastnew = "";
+		for (String part : dblineSplitlastnew) {
+			newdblinelastnew = newdblinelastnew + part + " ";
+		}
+		data.set(dbindexlastnew, newdblinelastnew);
+	}
 	// train the AI
 	public static double training(double dbVersion, ArrayList<String> data) {
 
@@ -459,7 +482,8 @@ public class GameApp {
 		int XwinGames = 0;
 		int tieGames = 0;
 		int totalGames = 0;
-		int ffGames = 0;
+		int OffGames = 0;
+		int XffGames =0;
 		int trainingIter = 15;
 		for (int n = 0; n < trainingIter; n++) {
 			// play 10000 games per iteration
@@ -502,13 +526,14 @@ public class GameApp {
 						trainingTie(logO,logX,data,start);
 					} else if(step == -1) {
 						gameover = true;
-						ffGames++;
 						if(player) {
+							OffGames++;
 							XwinGames++;
 							if(logO.size()>0 && logX.size()>0)
 								trainingWin(logO,logX,data,2);
 						}
 						else {
+							XffGames++;
 							OwinGames++;
 							if(logO.size()>0 && logX.size()>0)
 								trainingWin(logO,logX,data,1);
@@ -548,11 +573,12 @@ public class GameApp {
 			dbVersion += 0.1;
 			writeData(data, "db-" + ("" + dbVersion).substring(0, 3) + ".txt");
 		}
-		System.out.println(OwinGames);
-		System.out.println(XwinGames);
-		System.out.println(tieGames);
-		System.out.println(totalGames);
-		System.out.println(ffGames);
+		System.out.println("OwinGames: "+OwinGames);
+		System.out.println("XwinGames: "+XwinGames);
+		System.out.println("tieGames: "+tieGames);
+		System.out.println("totalGames: "+totalGames);
+		System.out.println("OffGames: "+OffGames);
+		System.out.println("XffGames: "+XffGames);
 		return dbVersion;
 	}
 	//training with version
@@ -563,7 +589,8 @@ public class GameApp {
 		int XwinGames = 0;
 		int tieGames = 0;
 		int totalGames = 0;
-		int ffGames = 0;
+		int XffGames = 0;
+		int OffGames = 0;
 		int trainingIter = 15;
 		for (int n = 0; n < trainingIter; n++) {
 			// play 10000 games per iteration
@@ -578,6 +605,7 @@ public class GameApp {
 				// pick a random player to start
 				// O-true X-false
 				boolean start = randGenerator.nextBoolean();
+				data = data1;
 				if(!start) {
 					data = data2;
 				}
@@ -609,16 +637,15 @@ public class GameApp {
 						//trainingTie(logO,logX,data,start);
 					} else if(step == -1) {
 						gameover = true;
-						ffGames++;
 						if(player) {
+							OffGames++;
 							XwinGames++;
-							if(logO.size()>0 && logX.size()>0)
-								trainingWin(logO,logX,data,2);
+							if(logO.size()>0)
+								trainingWithLose(logO,data);
 						}
 						else {
+							XffGames++;
 							OwinGames++;
-							if(logO.size()>0 && logX.size()>0)
-								trainingWin(logO,logX,data,1);
 						}
 					}
 					// not tie
@@ -638,13 +665,16 @@ public class GameApp {
 						boolean isWin = isWin(board, location, playerSymbol, lastlocation);
 						// change strategy based on W/L result
 						if (isWin) {
-							if(logO.size()>0 && logX.size()>0)
-								trainingWin(logO,logX,data,playerSymbol);
+							if(!player) {
+								if(logO.size()>0) {
+									trainingWithLose(logO,data);
+								}
+							}
 							if(playerSymbol ==1) {
 								OwinGames++;
 							}else if(playerSymbol ==2) {
 								XwinGames++;
-							}
+							}								
 							gameover = true;
 						}
 						if(player) {
@@ -661,11 +691,12 @@ public class GameApp {
 			dbVersion += 0.1;
 			writeData(data1, "db-" + ("" + dbVersion).substring(0, 3) + ".txt");
 		}
-		System.out.println(OwinGames);
-		System.out.println(XwinGames);
-		System.out.println(tieGames);
-		System.out.println(totalGames);
-		System.out.println(ffGames);
+		System.out.println("OwinGames: "+OwinGames);
+		System.out.println("XwinGames: "+XwinGames);
+		System.out.println("tieGames: "+tieGames);
+		System.out.println("totalGames: "+totalGames);
+		System.out.println("OffGames: "+OffGames);
+		System.out.println("XffGames: "+XffGames);
 		return dbVersion;
 	}
 
@@ -675,7 +706,8 @@ public class GameApp {
 		int XwinGames = 0;
 		int tieGames = 0;
 		int totalGames = 0;
-		int ffGames = 0;
+		int OffGames = 0;
+		int XffGames = 0;
 		int gameNum = 1000000;
 		for (int i = 0; i < gameNum; i++) {
 			totalGames++;
@@ -721,11 +753,12 @@ public class GameApp {
 					// System.out.println("tie");
 				} else if(step == -1) {
 					gameover = true;
-					ffGames ++;
 					if(player) {
+						OffGames++;
 						XwinGames++;
 					}
 					else {
+						XffGames++;
 						OwinGames++;
 					}
 //					System.out.println("log o");
@@ -783,11 +816,12 @@ public class GameApp {
 				}
 			}
 		}
-		System.out.println(OwinGames);
-		System.out.println(XwinGames);
-		System.out.println(tieGames);
-		System.out.println(totalGames);
-		System.out.println(ffGames);
+		System.out.println("OwinGames: "+OwinGames);
+		System.out.println("XwinGames: "+XwinGames);
+		System.out.println("tieGames: "+tieGames);
+		System.out.println("totalGames: "+totalGames);
+		System.out.println("OffGames: "+OffGames);
+		System.out.println("XffGames: "+XffGames);
 	}
 
 
