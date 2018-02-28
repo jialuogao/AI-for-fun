@@ -14,7 +14,7 @@ public class GameApp {
 		int[][] board = new int[3][3];
 
 		// read rule db
-		double dbVersion = 5.0;
+		double dbVersion = 1.5;
 		String dbStartingFile = "db-" + ("" + dbVersion).substring(0, 3) + ".txt";
 		ArrayList<String> data = new ArrayList<String>();
 		boolean hasData = readData(data, dbStartingFile);
@@ -46,8 +46,8 @@ public class GameApp {
 		}
 		else if (inputCommand.equalsIgnoreCase("gaming")) {
 			// game
-			String P1 = "db-0.0.txt";
-			String P2 = "db-6.4.txt";
+			String P1 = "db-3.0.txt";
+			String P2 = "db-0.0.txt";
 			ArrayList<String> data1 = new ArrayList<String>();
 			readData(data1, P1);
 			ArrayList<String> data2 = new ArrayList<String>();
@@ -458,17 +458,28 @@ public class GameApp {
 	}
 	//train with version if lose to the version
 	private static void trainingWithLose(ArrayList<String> logNew,ArrayList<String> data) {
+		for (int x =0;x<logNew.size();x++) {
+			String[] content = logNew.get(x).split(" ");
+			int dbindex = Integer.valueOf(content[0], 3);
+			int dbstep = Integer.parseInt(content[1]);
+			String dbline = data.get(dbindex);
+			String[] dblineSplit = dbline.split(" ");
+			dblineSplit[dbstep + 2] = ""
+					+ Math.max(0, (int)((Integer.parseInt(dblineSplit[dbstep + 2]) -Math.pow(4, x))));
+			String newdbline = "";
+			for (String part : dblineSplit) {
+				newdbline = newdbline + part + " ";
+			}
+			data.set(dbindex, newdbline);
+		}
 		String lastnew = logNew.get(logNew.size() - 1);
 		String[] contentlastnew = lastnew.split(" ");
 		int dbindexlastnew = Integer.valueOf(contentlastnew[0], 3);
 		int dbsteplastnew = Integer.parseInt(contentlastnew[1]);
 		String dblinelastnew = data.get(dbindexlastnew);
 		String[] dblineSplitlastnew = dblinelastnew.split(" ");
-		for(int i = 0;i<9;i++) {
-			dblineSplitlastnew[i + 2]=""+ Math.max(0, (Integer.parseInt(dblineSplitlastnew[i + 2]) - 500));
-		}
 		dblineSplitlastnew[dbsteplastnew + 2] = ""
-				+ Math.max(0, (Integer.parseInt(dblineSplitlastnew[dbsteplastnew + 2]) - 4500));
+				+ Math.max(0, (Integer.parseInt(dblineSplitlastnew[dbsteplastnew + 2]) - 5000));
 		String newdblinelastnew = "";
 		for (String part : dblineSplitlastnew) {
 			newdblinelastnew = newdblinelastnew + part + " ";
