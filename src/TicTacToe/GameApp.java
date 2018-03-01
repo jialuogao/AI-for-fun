@@ -47,7 +47,7 @@ public class GameApp {
 		else if (inputCommand.equalsIgnoreCase("gaming")) {
 			// game
 			String P1 = "db-4.9.txt";
-			String P2 = "db-0.0.txt";
+			String P2 = "db-9.9.txt";
 			ArrayList<String> data1 = new ArrayList<String>();
 			readData(data1, P1);
 			ArrayList<String> data2 = new ArrayList<String>();
