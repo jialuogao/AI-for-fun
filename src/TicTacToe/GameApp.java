@@ -14,7 +14,7 @@ public class GameApp {
 		int[][] board = new int[3][3];
 
 		// read rule db
-		double dbVersion = 4.4;
+		double dbVersion = 4.0;
 		String dbStartingFile = "db-" + ("" + dbVersion).substring(0, 3) + ".txt";
 		ArrayList<String> data = new ArrayList<String>();
 		boolean hasData = readData(data, dbStartingFile);
@@ -23,18 +23,31 @@ public class GameApp {
 			data = initData();
 			writeData(data, dbStartingFile);
 		}
-
+		
 		// UI
 		System.out.println("Input \"training\" to start training");
+		System.out.println("Input \"training with\" to start training with set version");
 		System.out.println("Input \"gaming\" to start play");
 		System.out.println("Input \"playing\" to start play");
 		String inputCommand = input.nextLine();
 		if (inputCommand.equalsIgnoreCase("training")) {
 			dbVersion = training(dbVersion, data);
-		} else if (inputCommand.equalsIgnoreCase("gaming")) {
+		} 
+		else if(inputCommand.equalsIgnoreCase("training with")) {
+			String trainingFile = "db-0.0.txt";
+			ArrayList<String> data2 = new ArrayList<String>();
+			boolean hasData2 = readData(data2,trainingFile);
+			if(!hasData2) {
+				System.out.println("Date does not exist");
+			}
+			else {
+				dbVersion = training(dbVersion, data, data2);				
+			}
+		}
+		else if (inputCommand.equalsIgnoreCase("gaming")) {
 			// game
-			String P1 = "db-5.8.txt";
-			String P2 = "db-5.8.txt";
+			String P1 = "db-4.9.txt";
+			String P2 = "db-0.0.txt";
 			ArrayList<String> data1 = new ArrayList<String>();
 			readData(data1, P1);
 			ArrayList<String> data2 = new ArrayList<String>();
@@ -44,7 +57,7 @@ public class GameApp {
 			game(data1, data2);
 		}else if(inputCommand.equalsIgnoreCase("playing")) {
 			
-			String AIversion = "db-5.8.txt";
+			String AIversion = "db-5.0.txt";
 			ArrayList<String> AIdata = new ArrayList<String>();
 			readData(AIdata,AIversion);
 			
@@ -132,6 +145,7 @@ public class GameApp {
 						// play
 						if(AIlocation[0]<0||AIlocation[0]>2||AIlocation[1]<0||AIlocation[1]>2) {
 							System.out.println("badbadbad");
+							//out of range
 						}
 						board = playStep(board, AIlocation, AISymbol);
 						System.out.println("AI played: "+AIlocation[0]+","+AIlocation[1]);
@@ -161,7 +175,7 @@ public class GameApp {
 						else if(playerSymbol==2)
 							logX.add(gameStatus+" "+step);
 						if(board[location[1]][location[0]]!=0) {
-							System.out.println("you made a invalid move, please restart the game");
+							System.out.println("you made an invalid move, please restart the game");
 							isFair = false;
 							break;
 						}
@@ -334,8 +348,11 @@ public class GameApp {
 			int dbsteplasto = Integer.parseInt(contentlasto[1]);
 			String dblinelasto = data.get(dbindexlasto);
 			String[] dblineSplitlasto = dblinelasto.split(" ");
+			for(int i = 0;i<9;i++) {
+				dblineSplitlasto[i + 2]=""+ Math.max(0, (Integer.parseInt(dblineSplitlasto[i + 2]) - 1000));
+			}
 			dblineSplitlasto[dbsteplasto + 2] = ""
-					+ Math.max(0, (Integer.parseInt(dblineSplitlasto[dbsteplasto + 2]) + 500));
+					+ Math.max(0, (Integer.parseInt(dblineSplitlasto[dbsteplasto + 2]) + 2000));
 			String newdblinelasto = "";
 			for (String part : dblineSplitlasto) {
 				newdblinelasto = newdblinelasto + part + " ";
@@ -387,9 +404,12 @@ public class GameApp {
 				}
 				data.set(dbindex, newdbline);
 			}
+			
 			if(logO.size()==0) {
+				//
 				System.out.println();
 			}
+			
 			String lasto = logO.get(logO.size() - 1);
 			String[] contentlasto = lasto.split(" ");
 			int dbindexlasto = Integer.valueOf(contentlasto[0], 3);
@@ -424,8 +444,11 @@ public class GameApp {
 			int dbsteplastx = Integer.parseInt(contentlastx[1]);
 			String dblinelastx = data.get(dbindexlastx);
 			String[] dblineSplitlastx = dblinelastx.split(" ");
+			for(int i = 0;i<9;i++) {
+				dblineSplitlastx[i + 2]=""+ Math.max(0, (Integer.parseInt(dblineSplitlastx[i + 2]) - 1000));
+			}
 			dblineSplitlastx[dbsteplastx + 2] = ""
-					+ Math.max(0, (Integer.parseInt(dblineSplitlastx[dbsteplastx + 2]) + 500));
+					+ Math.max(0, (Integer.parseInt(dblineSplitlastx[dbsteplastx + 2]) + 2000));
 			String newdblinelastx = "";
 			for (String part : dblineSplitlastx) {
 				newdblinelastx = newdblinelastx + part + " ";
@@ -433,14 +456,58 @@ public class GameApp {
 			data.set(dbindexlastx, newdblinelastx);
 		}
 	}
+	//train with version if lose to the version
+	private static void trainingWithLose(ArrayList<String> logNew,ArrayList<String> data) {
+		for (int x =0;x<logNew.size();x++) {
+			String[] content = logNew.get(x).split(" ");
+			int dbindex = Integer.valueOf(content[0], 3);
+			int dbstep = Integer.parseInt(content[1]);
+			String dbline = data.get(dbindex);
+			String[] dblineSplit = dbline.split(" ");
+			dblineSplit[dbstep + 2] = ""
+					+ Math.max(0, (int)((Integer.parseInt(dblineSplit[dbstep + 2]) -Math.pow(20, x))));
+			String newdbline = "";
+			for (String part : dblineSplit) {
+				newdbline = newdbline + part + " ";
+			}
+			data.set(dbindex, newdbline);
+		}
+		String last = logNew.get(logNew.size() - 1);
+		String[] contentlast = last.split(" ");
+		int dbindexlast = Integer.valueOf(contentlast[0], 3);
+		int dbsteplast = Integer.parseInt(contentlast[1]);
+		String dblinelast = data.get(dbindexlast);
+		
+		//System.out.println("before "+dblinelast);
+		
+		String[] dblineSplitlast = dblinelast.split(" ");
+		
+		//System.out.println(dblineSplitlast[dbsteplast + 2]);
+		//System.out.println(last);
+		
+		dblineSplitlast[dbsteplast + 2] = ""
+				+ Math.max(0, (Integer.parseInt(dblineSplitlast[dbsteplast + 2]) - 5000));
+
+		//System.out.println(dblineSplitlast[dbsteplast + 2]);
+		
+		String newdblinelast = "";
+		for (String part : dblineSplitlast) {
+			newdblinelast = newdblinelast + part + " ";
+		}
+		data.set(dbindexlast, newdblinelast);
+		
+		//System.out.println("after  "+newdblinelast);
+		
+	}
 	// train the AI
 	public static double training(double dbVersion, ArrayList<String> data) {
-		
+
 		int OwinGames = 0;
 		int XwinGames = 0;
 		int tieGames = 0;
 		int totalGames = 0;
-		int ffGames = 0;
+		int OffGames = 0;
+		int XffGames =0;
 		int trainingIter = 15;
 		for (int n = 0; n < trainingIter; n++) {
 			// play 10000 games per iteration
@@ -483,13 +550,14 @@ public class GameApp {
 						trainingTie(logO,logX,data,start);
 					} else if(step == -1) {
 						gameover = true;
-						ffGames++;
 						if(player) {
+							OffGames++;
 							XwinGames++;
 							if(logO.size()>0 && logX.size()>0)
 								trainingWin(logO,logX,data,2);
 						}
 						else {
+							XffGames++;
 							OwinGames++;
 							if(logO.size()>0 && logX.size()>0)
 								trainingWin(logO,logX,data,1);
@@ -529,23 +597,155 @@ public class GameApp {
 			dbVersion += 0.1;
 			writeData(data, "db-" + ("" + dbVersion).substring(0, 3) + ".txt");
 		}
-		System.out.println(OwinGames);
-		System.out.println(XwinGames);
-		System.out.println(tieGames);
-		System.out.println(totalGames);
-		System.out.println(ffGames);
+		System.out.println("OwinGames: "+OwinGames);
+		System.out.println("XwinGames: "+XwinGames);
+		System.out.println("tieGames: "+tieGames);
+		System.out.println("totalGames: "+totalGames);
+		System.out.println("OffGames: "+OffGames);
+		System.out.println("XffGames: "+XffGames);
+		return dbVersion;
+	}
+	//training with version
+	public static double training(double dbVersion, ArrayList<String> data1,ArrayList<String> data2) {
+		
+		ArrayList<String> data = data1;
+		int OwinGames = 0;
+		int XwinGames = 0;
+		int tieGames = 0;
+		int totalGames = 0;
+		int XffGames = 0;
+		int OffGames = 0;
+		int trainingIter = 10;
+		for (int n = 0; n < trainingIter; n++) {
+			// play 10000 games per iteration
+			for (int i = 0; i < 1000000; i++) {
+				totalGames++;
+				
+				ArrayList<String> logO = new ArrayList<String>();
+				ArrayList<String> logX = new ArrayList<String>();
+				// play the game and change "data"
+				boolean gameover = false;
+				int[][] board = new int[3][3];
+				// pick a random player to start
+				// true data1 go; false data2 go
+				boolean player = randGenerator.nextBoolean();
+				while (!gameover) {
+					// read in the board
+					String gameStatus = readGameStatus(board);
+					data = data1;
+					if(!player) {
+						gameStatus = reverseStatus(gameStatus);	
+						data = data2;
+					}
+					// search for strategy
+					String[] strategy = searchStrategy(gameStatus, data);
+					// play
+					// Symbol that a player use
+					// 1 for O
+					// 2 for X
+					int playerSymbol = 0;
+					if (player) {
+						playerSymbol = 1;
+					} else {
+						playerSymbol = 2;
+					}				
+					// find the right step to play
+					int step = calculateStep(strategy, board);
+					
+//					if(step==0 && Integer.parseInt(strategy[0])==0) {
+//						System.out.println(gameStatus);
+//						printBoard(board);
+//						System.out.println(step);
+//						for(String a:strategy) {
+//							System.out.print(a+" ");
+//						}
+//						System.out.println();
+//					}
+					
+					
+					// no place resulted tieGames
+					if (step == -999) {
+						gameover = true;
+						tieGames++;
+						// change O
+						//trainingTie(logO,logX,data,start);
+					} else if(step == -1) {
+						gameover = true;
+						if(player) {
+							OffGames++;
+							XwinGames++;
+							if(logO.size()>0)
+								trainingWithLose(logO,data);
+						}
+						else {
+							XffGames++;
+							OwinGames++;
+						}
+					}
+					// not tie
+					else {
+						if (player) {
+							logO.add(gameStatus + " " + step);
+						} else {
+							logX.add(gameStatus + " " + step);
+						}
+						
+						// convert step into x,y coordinate location
+						int[] location = convertLocation(step);
+						// play
+						board = playStep(board, location, playerSymbol);
+						// check win condition
+						ArrayList<int[]> lastlocation = new ArrayList<int[]>();
+						boolean isWin = isWin(board, location, playerSymbol, lastlocation);
+						// change strategy based on W/L result
+						if (isWin) {
+							if(!player) {
+								if(logO.size()>0) {
+									//System.out.println(data1.get(Integer.valueOf(logO.get(logO.size()-1).split(" ")[0],3)));
+									trainingWithLose(logO,data1);
+									//System.out.println(data1.get(Integer.valueOf(logO.get(logO.size()-1).split(" ")[0],3)));
+									//System.out.println("time");
+								}
+							}
+							if(playerSymbol ==1) {
+								OwinGames++;
+							}else if(playerSymbol ==2) {
+								XwinGames++;
+							}								
+							gameover = true;
+						}
+						if(player) {
+							data=data2;
+						}
+						else {
+							data=data1;
+						}
+						player = !player;
+					}
+				}
+			}
+			// create new version for data file
+			dbVersion += 0.1;
+			writeData(data1, "db-" + ("" + dbVersion).substring(0, 3) + ".txt");
+		}
+		System.out.println("OwinGames: "+OwinGames);
+		System.out.println("XwinGames: "+XwinGames);
+		System.out.println("tieGames: "+tieGames);
+		System.out.println("totalGames: "+totalGames);
+		System.out.println("OffGames: "+OffGames);
+		System.out.println("XffGames: "+XffGames);
 		return dbVersion;
 	}
 
-	
 	public static void game(ArrayList<String> data1, ArrayList<String> data2) {
 
 		int OwinGames = 0;
 		int XwinGames = 0;
 		int tieGames = 0;
 		int totalGames = 0;
-		int ffGames = 0;
-		int gameNum = 1000000;
+		int OffGames = 0;
+		int XffGames = 0;
+		int gameNum = 10000000;
 		for (int i = 0; i < gameNum; i++) {
 			totalGames++;
 
@@ -590,22 +790,23 @@ public class GameApp {
 					// System.out.println("tie");
 				} else if(step == -1) {
 					gameover = true;
-					ffGames ++;
 					if(player) {
+						OffGames++;
 						XwinGames++;
 					}
 					else {
+						XffGames++;
 						OwinGames++;
 					}
-					System.out.println("log o");
-					for(String o:logO) {
-						System.out.println(o);
-					}
-					System.out.println("log x");
-					for(String x:logX) {
-						System.out.println(x);
-					}
-					System.out.println("end log");
+//					System.out.println("log o");
+//					for(String o:logO) {
+//						System.out.println(o);
+//					}
+//					System.out.println("log x");
+//					for(String x:logX) {
+//						System.out.println(x);
+//					}
+//					System.out.println("end log");
 				}
 				else {
 					if (player) {
@@ -631,8 +832,21 @@ public class GameApp {
 					if (isWin) {
 						if (playerSymbol == 1) {
 							OwinGames++;
+							
+							
 						} else if (playerSymbol == 2) {
 							XwinGames++;
+
+//							System.out.println("log o");
+//							for(String o:logO) {
+//								System.out.println(o);
+//							}
+//							System.out.println("log x");
+//							for(String x:logX) {
+//								System.out.println(x);
+//							}
+//							System.out.println("end log");
+//							return;
 						}
 						gameover = true;
 					}
@@ -641,11 +855,12 @@ public class GameApp {
 				}
 			}
 		}
-		System.out.println(OwinGames);
-		System.out.println(XwinGames);
-		System.out.println(tieGames);
-		System.out.println(totalGames);
-		System.out.println(ffGames);
+		System.out.println("OwinGames: "+OwinGames);
+		System.out.println("XwinGames: "+XwinGames);
+		System.out.println("tieGames: "+tieGames);
+		System.out.println("totalGames: "+totalGames);
+		System.out.println("OffGames: "+OffGames);
+		System.out.println("XffGames: "+XffGames);
 	}
 
 
