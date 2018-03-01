@@ -14,7 +14,7 @@ public class GameApp {
 		int[][] board = new int[3][3];
 
 		// read rule db
-		double dbVersion = 1.5;
+		double dbVersion = 4.0;
 		String dbStartingFile = "db-" + ("" + dbVersion).substring(0, 3) + ".txt";
 		ArrayList<String> data = new ArrayList<String>();
 		boolean hasData = readData(data, dbStartingFile);
@@ -46,7 +46,7 @@ public class GameApp {
 		}
 		else if (inputCommand.equalsIgnoreCase("gaming")) {
 			// game
-			String P1 = "db-3.0.txt";
+			String P1 = "db-4.9.txt";
 			String P2 = "db-0.0.txt";
 			ArrayList<String> data1 = new ArrayList<String>();
 			readData(data1, P1);
@@ -465,26 +465,39 @@ public class GameApp {
 			String dbline = data.get(dbindex);
 			String[] dblineSplit = dbline.split(" ");
 			dblineSplit[dbstep + 2] = ""
-					+ Math.max(0, (int)((Integer.parseInt(dblineSplit[dbstep + 2]) -Math.pow(4, x))));
+					+ Math.max(0, (int)((Integer.parseInt(dblineSplit[dbstep + 2]) -Math.pow(20, x))));
 			String newdbline = "";
 			for (String part : dblineSplit) {
 				newdbline = newdbline + part + " ";
 			}
 			data.set(dbindex, newdbline);
 		}
-		String lastnew = logNew.get(logNew.size() - 1);
-		String[] contentlastnew = lastnew.split(" ");
-		int dbindexlastnew = Integer.valueOf(contentlastnew[0], 3);
-		int dbsteplastnew = Integer.parseInt(contentlastnew[1]);
-		String dblinelastnew = data.get(dbindexlastnew);
-		String[] dblineSplitlastnew = dblinelastnew.split(" ");
-		dblineSplitlastnew[dbsteplastnew + 2] = ""
-				+ Math.max(0, (Integer.parseInt(dblineSplitlastnew[dbsteplastnew + 2]) - 5000));
-		String newdblinelastnew = "";
-		for (String part : dblineSplitlastnew) {
-			newdblinelastnew = newdblinelastnew + part + " ";
+		String last = logNew.get(logNew.size() - 1);
+		String[] contentlast = last.split(" ");
+		int dbindexlast = Integer.valueOf(contentlast[0], 3);
+		int dbsteplast = Integer.parseInt(contentlast[1]);
+		String dblinelast = data.get(dbindexlast);
+		
+		//System.out.println("before "+dblinelast);
+		
+		String[] dblineSplitlast = dblinelast.split(" ");
+		
+		//System.out.println(dblineSplitlast[dbsteplast + 2]);
+		//System.out.println(last);
+		
+		dblineSplitlast[dbsteplast + 2] = ""
+				+ Math.max(0, (Integer.parseInt(dblineSplitlast[dbsteplast + 2]) - 5000));
+
+		//System.out.println(dblineSplitlast[dbsteplast + 2]);
+		
+		String newdblinelast = "";
+		for (String part : dblineSplitlast) {
+			newdblinelast = newdblinelast + part + " ";
 		}
-		data.set(dbindexlastnew, newdblinelastnew);
+		data.set(dbindexlast, newdblinelast);
+		
+		//System.out.println("after  "+newdblinelast);
+		
 	}
 	// train the AI
 	public static double training(double dbVersion, ArrayList<String> data) {
@@ -602,10 +615,10 @@ public class GameApp {
 		int totalGames = 0;
 		int XffGames = 0;
 		int OffGames = 0;
-		int trainingIter = 15;
+		int trainingIter = 10;
 		for (int n = 0; n < trainingIter; n++) {
 			// play 10000 games per iteration
-			for (int i = 0; i < 100000; i++) {
+			for (int i = 0; i < 1000000; i++) {
 				totalGames++;
 				
 				ArrayList<String> logO = new ArrayList<String>();
@@ -614,18 +627,16 @@ public class GameApp {
 				boolean gameover = false;
 				int[][] board = new int[3][3];
 				// pick a random player to start
-				// O-true X-false
-				boolean start = randGenerator.nextBoolean();
-				data = data1;
-				if(!start) {
-					data = data2;
-				}
-				boolean player = start;
+				// true data1 go; false data2 go
+				boolean player = randGenerator.nextBoolean();
 				while (!gameover) {
 					// read in the board
 					String gameStatus = readGameStatus(board);
-					if(!player)
-						gameStatus = reverseStatus(gameStatus);
+					data = data1;
+					if(!player) {
+						gameStatus = reverseStatus(gameStatus);	
+						data = data2;
+					}
 					// search for strategy
 					String[] strategy = searchStrategy(gameStatus, data);
 					// play
@@ -640,6 +651,18 @@ public class GameApp {
 					}				
 					// find the right step to play
 					int step = calculateStep(strategy, board);
+					
+//					if(step==0 && Integer.parseInt(strategy[0])==0) {
+//						System.out.println(gameStatus);
+//						printBoard(board);
+//						System.out.println(step);
+//						for(String a:strategy) {
+//							System.out.print(a+" ");
+//						}
+//						System.out.println();
+//					}
+					
+					
 					// no place resulted tieGames
 					if (step == -999) {
 						gameover = true;
@@ -678,7 +701,10 @@ public class GameApp {
 						if (isWin) {
 							if(!player) {
 								if(logO.size()>0) {
-									trainingWithLose(logO,data);
+									//System.out.println(data1.get(Integer.valueOf(logO.get(logO.size()-1).split(" ")[0],3)));
+									trainingWithLose(logO,data1);
+									//System.out.println(data1.get(Integer.valueOf(logO.get(logO.size()-1).split(" ")[0],3)));
+									//System.out.println("time");
 								}
 							}
 							if(playerSymbol ==1) {
@@ -719,7 +745,7 @@ public class GameApp {
 		int totalGames = 0;
 		int OffGames = 0;
 		int XffGames = 0;
-		int gameNum = 1000000;
+		int gameNum = 10000000;
 		for (int i = 0; i < gameNum; i++) {
 			totalGames++;
 
@@ -807,6 +833,10 @@ public class GameApp {
 						if (playerSymbol == 1) {
 							OwinGames++;
 							
+							
+						} else if (playerSymbol == 2) {
+							XwinGames++;
+
 //							System.out.println("log o");
 //							for(String o:logO) {
 //								System.out.println(o);
@@ -816,9 +846,7 @@ public class GameApp {
 //								System.out.println(x);
 //							}
 //							System.out.println("end log");
-							
-						} else if (playerSymbol == 2) {
-							XwinGames++;
+//							return;
 						}
 						gameover = true;
 					}
