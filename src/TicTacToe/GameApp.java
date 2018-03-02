@@ -675,7 +675,7 @@ public class GameApp {
 							OffGames++;
 							XwinGames++;
 							if(logO.size()>0)
-								trainingWithLose(logO,data);
+								trainingWithLose(logO,data1);
 						}
 						else {
 							XffGames++;
