@@ -7,7 +7,7 @@ public class GameApp {
 
 	private static Scanner input = new Scanner(System.in);
 	private static Random randGenerator = new Random();
-	private static final String DIR = "/src/TicTacToe/";
+	private static final String DIR = "src/TicTacToe/";
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
@@ -46,8 +46,8 @@ public class GameApp {
 		}
 		else if (inputCommand.equalsIgnoreCase("gaming")) {
 			// game
-			String P1 = DIR+"db-0.0.txt";
-			String P2 = DIR+"db-4.9.txt";
+			String P1 = DIR+"db-0.1.txt";
+			String P2 = DIR+"db-0.1.txt";
 			ArrayList<String> data1 = new ArrayList<String>();
 			readData(data1, P1);
 			ArrayList<String> data2 = new ArrayList<String>();
