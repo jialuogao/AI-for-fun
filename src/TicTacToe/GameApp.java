@@ -7,7 +7,7 @@ public class GameApp {
 
 	private static Scanner input = new Scanner(System.in);
 	private static Random randGenerator = new Random();
-
+	private static final String DIR = "/src/TicTacToe/";
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
@@ -15,7 +15,7 @@ public class GameApp {
 
 		// read rule db
 		double dbVersion = 4.0;
-		String dbStartingFile = "db-" + ("" + dbVersion).substring(0, 3) + ".txt";
+		String dbStartingFile = DIR+"db-" + ("" + dbVersion).substring(0, 3) + ".txt";
 		ArrayList<String> data = new ArrayList<String>();
 		boolean hasData = readData(data, dbStartingFile);
 		if (!hasData) {
@@ -34,7 +34,7 @@ public class GameApp {
 			dbVersion = training(dbVersion, data);
 		} 
 		else if(inputCommand.equalsIgnoreCase("training with")) {
-			String trainingFile = "db-0.0.txt";
+			String trainingFile = DIR+"db-0.0.txt";
 			ArrayList<String> data2 = new ArrayList<String>();
 			boolean hasData2 = readData(data2,trainingFile);
 			if(!hasData2) {
@@ -46,8 +46,8 @@ public class GameApp {
 		}
 		else if (inputCommand.equalsIgnoreCase("gaming")) {
 			// game
-			String P1 = "db-0.0.txt";
-			String P2 = "db-4.9.txt";
+			String P1 = DIR+"db-0.0.txt";
+			String P2 = DIR+"db-4.9.txt";
 			ArrayList<String> data1 = new ArrayList<String>();
 			readData(data1, P1);
 			ArrayList<String> data2 = new ArrayList<String>();
@@ -57,7 +57,7 @@ public class GameApp {
 			game(data1, data2);
 		}else if(inputCommand.equalsIgnoreCase("playing")) {
 			
-			String AIversion = "db-5.0.txt";
+			String AIversion = DIR+"db-4.9.txt";
 			ArrayList<String> AIdata = new ArrayList<String>();
 			readData(AIdata,AIversion);
 			
