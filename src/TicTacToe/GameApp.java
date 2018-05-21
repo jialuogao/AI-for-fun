@@ -46,8 +46,8 @@ public class GameApp {
 		}
 		else if (inputCommand.equalsIgnoreCase("gaming")) {
 			// game
-			String P1 = "db-4.9.txt";
-			String P2 = "db-9.9.txt";
+			String P1 = "db-0.0.txt";
+			String P2 = "db-4.9.txt";
 			ArrayList<String> data1 = new ArrayList<String>();
 			readData(data1, P1);
 			ArrayList<String> data2 = new ArrayList<String>();
@@ -745,7 +745,7 @@ public class GameApp {
 		int totalGames = 0;
 		int OffGames = 0;
 		int XffGames = 0;
-		int gameNum = 10000000;
+		int gameNum = 100000;
 		for (int i = 0; i < gameNum; i++) {
 			totalGames++;
 
