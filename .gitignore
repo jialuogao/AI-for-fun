@@ -1,4 +1,6 @@
 bin/
 
-src/CarRecognizer/cars_train/
-src/CarRecognizer/cars_test/
+cars_train/
+cars_test/
+cars_train_compressed/
+cars_test_compressed/
