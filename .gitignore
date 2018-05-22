@@ -1,1 +1,4 @@
-/bin/
+bin/
+
+src/CarRecognizer/cars_train/
+src/CarRecognizer/cars_test/
