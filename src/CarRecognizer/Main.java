@@ -1,55 +1,99 @@
 package CarRecognizer;
 
 import java.io.IOException;
+import java.util.Random;
 //image size 640x480
 public class Main {
 
 	public static final String trainingDir = "cars_train/";
 	public static final String testingDir = "cars_test/";
-	
-	
+	private static Random generator = new Random();
+	private static Node[][] network;
 	public static void main(String[] args) throws IOException{
 		// TODO Auto-generated method stub
 		
-		
+		buildNN(NNInfo);
 		
 	}
-	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Local Response Normalization, 5 Full, 6 Output
-	private int[][][] NNInfo = 
+	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max
+	private static int[][][] NNInfo = 
 		{//Type of the layer, Layers it connects to, Layer Information
-/*0*/			{{0},{1,4....}},			//Input	640x480
+/*0*/			{{0},{1,4},{921600}},			//Input	640x480x3
 
-/*1*/			{{1},{2},{11,11,5,12}},		//Convol: filter size x, y, stride, node size	127*95*12
+/*1*/			{{1},{2},{5,5,3,24}},		//Convol: filter size x, y, stride, node size	213*160*24
 /*2*/			{{2},{3}},					//ReLU
-/*3*/			{{3},{4},{2,2}},			//MaxPool	64*48*12
-/*4*/			{{4},{5,9},....},			//LRNorm
+/*3*/			{{3},{4,7},{2,2}},			//MaxPool	107*80*24
 
-/*5*/			{{1},{6},{5,5,1,18}},		//Convol	60*44*18
-/*6*/			{{2},{7}},
-/*7*/			{{3},{8},{2,2}},			//			30*22*18
-/*8*/			{{4},{9,10},....}
+/*4*/			{{1},{5},{5,5,1,18}},		//Convol	103*76*18
+/*5*/			{{2},{6}},
+/*6*/			{{3},{7,8},{2,2}},			//			52*38*18
 
-/*9*/			{{5},{10,11},....}			//Full		240
-/*10*/			{{5},{11,15},....}			//Full		240
+/*7*/			{{4},{8,9},{120}},			//Full		120
+/*8*/			{{4},{9,12},{120}},			//Full		120
 
-/*11*/			{{1},{12},{3,3,1,48}},		//			28*20*48
-/*12*/			{{2},{13}},
-/*13*/			{{3},{14},{2,2}},			//			14*10*48
-/*14*/			{{4},{15,19},....},
+/*9*/			{{1},{10},{5,5,1,48}},		//			48*34*48
+/*10*/			{{2},{11}},
+/*11*/			{{3},{12,15},{2,2}},		//			24*17*48
 
-/*15*/			{{1},{16},{3,3,1,48}},		//			12*8*48
-/*16*/			{{2},{17}},
-/*17*/			{{3},{18},{2,2}},			//			6*4*48
-/*18*/			{{4},{19,20},....},
+/*12*/			{{1},{13},{3,3,1,96}},		//			22*15*96
+/*13*/			{{2},{14}},
+/*14*/			{{3},{15,16},{2,2}},		//			11*8*96
 
-/*19*/			{{5},{20,21},....},			//			24
-/*20*/			{{5},{21},....},			//			18
-/*21*/			{{5},{22},....},			//			6
-/*22*/			{{6},{}},					//			1
+/*15*/			{{4},{16,17},{120}},		//			120
+/*16*/			{{4},{17},{180}},			//			180
+/*17*/			{{4},{18},{80}},			//			80
+/*18*/			{{5},{},{1}},				//			1
 		};
 
-	public static void buildNN() {
-
+	public static void buildNN(int[][][] NNInfo) {
+		network = new Node[NNInfo.length][];
+		for(int layer = NNInfo.length-1; layer>-1; layer--) {
+			int[][] line = NNInfo[layer];
+			int type = line[0][0];
+			switch (type) {
+			case 0:
+				int nodeNum = line[2][0];
+				//create the layer
+				network[layer]= new Node[nodeNum];
+				int[] connection = line[1];
+				//create node and connect them to the network
+				for(int con = 0; con<connection.length;con++) {
+					//if dosen't exist, create and connect
+					if(network[layer][0]==null) {
+						for(int node = 0; node<nodeNum;node++) {
+							//create current node
+							Node currentNode = new Node();
+							int conNum = network[con].length;
+							//find each children from the first connection layer and add them to "children" 
+							for(int edge = 0; edge<conNum;edge++) {
+								Node childNode = network[con][edge];
+								double weight = generator.nextDouble();
+								NodeWeightWrapper child = new NodeWeightWrapper(childNode,weight);
+								currentNode.getChildren().add(child);
+							}
+							network[layer][node] = currentNode;
+						}
+					}
+					//connect without recreating
+					else {
+						for(int node = 0; node<nodeNum;node++) {
+							Node currentNode = network[layer][node];
+							int conNum = network[con].length;
+							for(int edge = 0; edge<conNum;edge++) {
+								Node childNode = network[con][edge];
+								double weight = generator.nextDouble();
+								NodeWeightWrapper child = new NodeWeightWrapper(childNode,weight);
+								currentNode.getChildren().add(child);
+							}
+						}
+					}
+				}
+				break;
+				//{{1},{2},{5,5,3,24}},		//Convol: filter size x, y, stride, node size	213*160*24
+			case 1:
+				
+			}
+		}
 	}
 
 }
