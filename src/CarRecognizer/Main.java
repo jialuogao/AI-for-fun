@@ -1,7 +1,17 @@
 package CarRecognizer;
 
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Random;
+
+import javax.imageio.ImageIO;
 //image size 640x480
 public class Main {
 
@@ -11,8 +21,8 @@ public class Main {
 	private static Node[][] network;
 	public static void main(String[] args) throws IOException{
 		// TODO Auto-generated method stub
-		
-		buildNN(NNInfo);
+		loadInfoDataFile();
+		//buildNN(NNInfo);
 		
 	}
 	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max
@@ -44,7 +54,108 @@ public class Main {
 /*17*/			{{4},{18},{80}},			//			80
 /*18*/			{{5},{},{1}},				//			1
 		};
-
+	private static final String datafile = "src/CarRecongnizer/info&dataFile.txt";
+	public static void loadInfoDataFile() throws IOException{
+		BufferedReader file = new BufferedReader(new InputStreamReader(new FileInputStream(datafile)));
+		String line;
+		while((line = file.readLine()) != null) {
+			String[] detail = line.split(" ");
+			if(detail[0].equals("l")) {
+				if(true);
+			}
+			else if(detail[0].equals("d")) {
+				
+			}
+		}
+	}
+	
+	
+	private static final String trainOutDir = "cars_train_compressed/";
+	
+	public static boolean forwardPassing(int dataNum) throws IOException{
+		String num = "0000"+dataNum;
+		num = num.substring(num.length()-5,num.length());
+		String fileName = num+".jpg";
+		
+		File img = new File(trainOutDir+fileName);
+		if(!img.exists()) {
+			return false;
+		}
+		InputStream inpStream = new BufferedInputStream(new FileInputStream(trainOutDir+fileName));
+		BufferedImage image = ImageIO.read(inpStream);
+		
+		int dWidth = 640;
+		int dHeight = 480;
+		double[][][] layer = new double[3][dHeight][dWidth];
+		//input layer
+		for(int color = 0; color <3;color++) {
+			for(int y = 0; y <dHeight;y++) {
+				for(int x = 0;x<dWidth;x++) {
+					Color c = new Color(image.getRGB(x, y));
+					if(color==0) {
+						layer[color][y][x]= c.getRed();						
+					}
+					else if(color==1) {
+						layer[color][y][x] = c.getBlue();
+					}
+					else {
+						layer[color][y][x] = c.getGreen();
+					}
+				}
+			}
+		}
+		layer = convolutional(x, y, stride, size);
+		layer = relu();
+		layer = maxpool(x, y, stride);
+		layer = convolutional(x, y, stride, size);
+		layer = relu();
+		layer = maxpool(x, y, stride);
+		layer = convolutional(x, y, stride, size);
+		layer = relu();
+		layer = maxpool(x, y, stride);
+		layer = weightedsum(size);
+		layer = weightedsum(size);
+		layer = weightedsum(size);
+		layer = softmax();
+		boolean prediction = false;
+		if(layer[0][0][0]>=0.5) {
+			prediction = true;
+		}
+		return prediction;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	public static void buildNN(int[][][] NNInfo) {
 		network = new Node[NNInfo.length][];
 		for(int layer = NNInfo.length-1; layer>-1; layer--) {

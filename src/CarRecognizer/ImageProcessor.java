@@ -36,7 +36,7 @@ public class ImageProcessor {
 	}
 	
 	public static void compressImages(String inDir, String outDir, int imgCount) throws IOException{
-		for(int dataNum = 6439; dataNum <= imgCount; dataNum++) {
+		for(int dataNum = 1; dataNum <= imgCount; dataNum++) {
 			String num = "0000"+dataNum;
 			num = num.substring(num.length()-5,num.length());
 			String fileName = num+".jpg";
