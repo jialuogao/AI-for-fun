@@ -104,19 +104,22 @@ public class Main {
 				}
 			}
 		}
-		layer = convolutional(x, y, stride, size);
-		layer = relu();
-		layer = maxpool(x, y, stride);
-		layer = convolutional(x, y, stride, size);
-		layer = relu();
-		layer = maxpool(x, y, stride);
-		layer = convolutional(x, y, stride, size);
-		layer = relu();
-		layer = maxpool(x, y, stride);
-		layer = weightedsum(size);
-		layer = weightedsum(size);
-		layer = weightedsum(size);
-		layer = softmax();
+		boolean init = true;
+		layer = convolutional(layer, weights[cha][y][x], bias, stride, size);
+		layer = relu(layer);
+		layer = maxpool(layer, 3, 3, 3);
+		layer = convolutional(layer, weights[cha][y][x], bias, stride, size);
+		layer = relu(layer);
+		layer = maxpool(layer, 2, 2, 2);
+		layer = convolutional(layer, weights[cha][y][x], bias, stride, size);
+		layer = relu(layer);
+		layer = maxpool(layer, 2, 2, 2);
+		//if training: layer = dropout(layer, 0.3);
+		layer = weightedsum(layer, new double[0][][][], 120, true);
+		layer = weightedsum(layer, new double[0][][][], 180, true);
+		layer = weightedsum(layer, new double[0][][][], 80, true);
+		layer = weightedsum(layer, new double[0][][][], 1, true);
+		layer = softmax(layer);
 		boolean prediction = false;
 		if(layer[0][0][0]>=0.5) {
 			prediction = true;
@@ -125,18 +128,110 @@ public class Main {
 	}
 	
 	
+	//TODO
+	public static double[][][] convolutional(double[][][] layer, double[][][] weights, double[]? bias, int stride, int size){
+		double [][][] newLayer = new double[size][][];
+		
+		return newLayer;
+	}
 	
+	public static double[][][] relu(double[][][] layer) {
+		for(int plane = 0; plane<layer.length;plane++) {
+			for(int row  = 0; row<layer[plane].length;row++) {
+				for(int val = 0; val<layer[plane][row].length;val++) {
+					//System.out.println(layer[plane][row][val]);
+					layer[plane][row][val] = Math.max(layer[plane][row][val], 0);
+					//System.out.println(layer[plane][row][val]);
+				}
+			}
+		}
+		return layer;
+	}
+	//??
+	public static double[][][] maxpool(double[][][] layer,int x,int y,int stride){
+		// x and y in new max-pooled layer
+		int newx = (int)(Math.ceil(layer[0][0].length - x)/stride + 1);
+		int newy = (int)(Math.ceil(layer[0].length - y)/stride + 1);
+		//create new layer
+		double[][][] newLayer = new double[layer.length][newy][newx];
+		for(int plane = 0; plane<layer.length; plane++) {
+			for(int j=0;j<newy;j++) {
+				//calculate corresponding y value
+				int currenty = j*stride;
+				for(int i =0;i<newx;i++) {
+					//calculate corresponding x value
+					int currentx = i*stride;
+					double max = 0;
+					//find the max(pooling)
+					for(int height = 0; height<y; height++) {
+						if(currenty+height==layer[plane].length)
+							break;
+						for(int width = 0; width<x;width++) {
+							if(currentx+width==layer[plane][currenty].length)
+								break;
+							max=Math.max(layer[plane][currenty+height][currentx+width],max);
+						}
+					}
+					//save to the new layer
+					newLayer[plane][j][i]=max;
+				}
+			}
+		}
+		return newLayer;
+	}
 	
+	public static double[][][] dropout(double[][][] layer, double probability){
+		for(int z = 0;z<layer.length;z++)
+			for(int y=0; y<layer[0].length;y++)
+				for(int x=0;x<layer[0][0].length;x++)
+					if(generator.nextDouble()<probability)
+						layer[z][y][x] = 0;
+		return layer;
+	}
+	//??
+	public static double[][][] weightedsum(double[][][] layer, double[][][][] weights, int size, boolean init){
+		if(init) {
+			weights = new double[size][layer.length][layer[0].length][layer[0][0].length];
+			for(int node = 0;node<weights.length;node++) {
+				for(int z=0;z<weights[node].length;z++) {
+					for(int y=0;y<weights[node][z].length;y++) {
+						for(int x=0;x<weights[node][z][y].length;x++) {
+							weights[node][z][y][x]=generator.nextDouble();
+						}
+					}
+				}
+			}
+		}
+		
+		double[][][] newLayer = new double[1][1][size+1];
+		//add bias
+		newLayer[0][0][size] = 1;
+		//dot weights for each node with layer and calculate weighted sum for each node(amount == size)
+		for(;size>0;size--) {
+			double weightedsum = 0;
+			for(int z=0;z<layer.length;z++) {
+				for(int y=0; y<layer[0].length;y++) {
+					for(int x=0;x<layer[0][0].length;x++) {
+						weightedsum += layer[z][y][x] * weights[size][z][y][x];
+					}
+				}
+			}
+			newLayer[0][0][size]=weightedsum;
+		}
+		return newLayer;
+	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+	public static double[][][] softmax(double[][][] layer){
+		double sum = 0;
+		for(double x : layer[0][0]) {
+			sum+=x;
+		}
+		double denum = Math.exp(sum);
+		for(int i = 0; i<layer[0][0].length;i++) {
+			layer[0][0][i] = Math.exp(layer[0][0][i])/denum;
+		}
+		return layer;
+	}
 	
 	
 	
