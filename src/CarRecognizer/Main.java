@@ -21,8 +21,10 @@ public class Main {
 	private static Node[][] network;
 	public static void main(String[] args) throws IOException{
 		// TODO Auto-generated method stub
-		loadInfoDataFile();
+		//loadInfoDataFile();
 		//buildNN(NNInfo);
+		boolean pred = forwardPassing(1);
+		System.out.println(pred);
 		
 	}
 	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max
@@ -105,20 +107,20 @@ public class Main {
 			}
 		}
 		boolean init = true;
-		layer = convolutional(layer, weights[cha][y][x], bias, stride, size);
+		layer = convolutional(layer, new double[0][0][0], 5, 5, 3, 24, true);
 		layer = relu(layer);
 		layer = maxpool(layer, 3, 3, 3);
-		layer = convolutional(layer, weights[cha][y][x], bias, stride, size);
+		layer = convolutional(layer, new double[0][0][0], 5, 5, 1, 18, true);
 		layer = relu(layer);
 		layer = maxpool(layer, 2, 2, 2);
-		layer = convolutional(layer, weights[cha][y][x], bias, stride, size);
+		layer = convolutional(layer, new double[0][0][0], 3, 3, 1, 48, true);
 		layer = relu(layer);
 		layer = maxpool(layer, 2, 2, 2);
 		//if training: layer = dropout(layer, 0.3);
-		layer = weightedsum(layer, new double[0][][][], 120, true);
-		layer = weightedsum(layer, new double[0][][][], 180, true);
-		layer = weightedsum(layer, new double[0][][][], 80, true);
-		layer = weightedsum(layer, new double[0][][][], 1, true);
+		layer = weightedsum(layer, new double[0][0][0][0], 120, true);
+		layer = weightedsum(layer, new double[0][0][0][0], 180, true);
+		layer = weightedsum(layer, new double[0][0][0][0], 80, true);
+		layer = weightedsum(layer, new double[0][0][0][0], 1, true);
 		layer = softmax(layer);
 		boolean prediction = false;
 		if(layer[0][0][0]>=0.5) {
@@ -129,9 +131,47 @@ public class Main {
 	
 	
 	//TODO
-	public static double[][][] convolutional(double[][][] layer, double[][][] weights, double[]? bias, int stride, int size){
-		double [][][] newLayer = new double[size][][];
+	public static double[][][] convolutional(double[][][] layer, double[][][] weights, int x, int y, int stride, int size, boolean init){
+		if(init) {
+			weights = new double[layer.length][y][x];
+			for(int z=0;z<weights.length;z++) {
+				for(int height=0;height<y;height++) {
+					for(int width=0;width<x;width++) {
+						weights[z][height][width]=generator.nextDouble();
+					}
+				}
+			}
+		}
 		
+		
+		int newx = (int)(Math.ceil((layer[0][0].length - x)/stride) + 1);
+		int newy = (int)(Math.ceil((layer[0].length - y)/stride) + 1);
+		double [][][] newLayer = new double[size][newy][newx];
+		for(int plane = 0; plane<size; plane++) {
+			for(int j=0;j<newy;j++) {
+				//calculate corresponding y value
+				int currenty = j*stride;
+				for(int i =0;i<newx;i++) {
+					//calculate corresponding x value
+					int currentx = i*stride;
+					double weightedSum = 0;
+
+					for(int height = 0; height<y; height++) {
+						if(currenty+height==layer[0].length)
+							break;
+						for(int width = 0; width<x;width++) {
+							if(currentx+width==layer[0][currenty].length)
+								break;
+							for(int depth = 0; depth<layer.length; depth++) {
+								weightedSum+=layer[depth][currenty+height][currentx+width] * weights[depth][height][width];								
+							}
+						}
+					}
+					//save to the new layer
+					newLayer[plane][j][i]=weightedSum;
+				}
+			}
+		}
 		return newLayer;
 	}
 	
@@ -191,7 +231,7 @@ public class Main {
 	//??
 	public static double[][][] weightedsum(double[][][] layer, double[][][][] weights, int size, boolean init){
 		if(init) {
-			weights = new double[size][layer.length][layer[0].length][layer[0][0].length];
+			weights = new double[size+1][layer.length][layer[0].length][layer[0][0].length];
 			for(int node = 0;node<weights.length;node++) {
 				for(int z=0;z<weights[node].length;z++) {
 					for(int y=0;y<weights[node][z].length;y++) {
@@ -212,6 +252,7 @@ public class Main {
 			for(int z=0;z<layer.length;z++) {
 				for(int y=0; y<layer[0].length;y++) {
 					for(int x=0;x<layer[0][0].length;x++) {
+						//System.out.println(z+" "+y+" "+x+" "+size);
 						weightedsum += layer[z][y][x] * weights[size][z][y][x];
 					}
 				}
