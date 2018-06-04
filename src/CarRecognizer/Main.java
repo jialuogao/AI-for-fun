@@ -15,16 +15,32 @@ import javax.imageio.ImageIO;
 //image size 640x480
 public class Main {
 
-	public static final String trainingDir = "cars_train/";
-	public static final String testingDir = "cars_test/";
+	public static final String trainingPosDir = "cars_train_compressed/";
+	public static final String testingPosDir = "cars_test_compressed/";
+	public static final String trainingNegDir = "trees_train_compressed/";
+	public static final String testingNegDir = "trees_test_compressed/";
 	private static Random generator = new Random();
 	private static Node[][] network;
 	public static void main(String[] args) throws IOException{
 		// TODO Auto-generated method stub
 		//loadInfoDataFile();
 		//buildNN(NNInfo);
-		boolean pred = forwardPassing(1);
-		System.out.println(pred);
+		
+		File dirin = new File(trainingPosDir);
+        for (final File f : dirin.listFiles()) {
+			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+			BufferedImage image = ImageIO.read(inpStream);
+			boolean isCar = true;
+			runNN(image, isCar);
+        }
+        
+        dirin = new File(trainingNegDir);
+        for (final File f : dirin.listFiles()) {
+			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+			BufferedImage image = ImageIO.read(inpStream);
+			boolean isCar = true;
+			runNN(image, isCar);
+        }
 		
 	}
 	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max
@@ -56,6 +72,7 @@ public class Main {
 /*17*/			{{4},{18},{80}},			//			80
 /*18*/			{{5},{},{1}},				//			1
 		};
+	
 	private static final String datafile = "src/CarRecongnizer/info&dataFile.txt";
 	public static void loadInfoDataFile() throws IOException{
 		BufferedReader file = new BufferedReader(new InputStreamReader(new FileInputStream(datafile)));
@@ -71,29 +88,23 @@ public class Main {
 		}
 	}
 	
-	
-	private static final String trainOutDir = "cars_train_compressed/";
-	
-	public static boolean forwardPassing(int dataNum) throws IOException{
-		String num = "0000"+dataNum;
-		num = num.substring(num.length()-5,num.length());
-		String fileName = num+".jpg";
+	public static void runNN(BufferedImage img, boolean isCar) throws IOException {
+		double target = isCar ? 1 : 0;
+		double pred = forwardPassing(img);
+		System.out.println(pred >= 0.5 ? 1:0);
 		
-		File img = new File(trainOutDir+fileName);
-		if(!img.exists()) {
-			return false;
-		}
-		InputStream inpStream = new BufferedInputStream(new FileInputStream(trainOutDir+fileName));
-		BufferedImage image = ImageIO.read(inpStream);
+	}
+	
+	public static double forwardPassing(BufferedImage img) throws IOException{
 		
-		int dWidth = 640;
-		int dHeight = 480;
+		int dWidth = img.getWidth();
+		int dHeight = img.getHeight();
 		double[][][] layer = new double[3][dHeight][dWidth];
 		//input layer
 		for(int color = 0; color <3;color++) {
 			for(int y = 0; y <dHeight;y++) {
 				for(int x = 0;x<dWidth;x++) {
-					Color c = new Color(image.getRGB(x, y));
+					Color c = new Color(img.getRGB(x, y));
 					if(color==0) {
 						layer[color][y][x]= c.getRed();						
 					}
@@ -122,11 +133,7 @@ public class Main {
 		layer = weightedsum(layer, new double[0][0][0][0], 80, true);
 		layer = weightedsum(layer, new double[0][0][0][0], 1, true);
 		layer = softmax(layer);
-		boolean prediction = false;
-		if(layer[0][0][0]>=0.5) {
-			prediction = true;
-		}
-		return prediction;
+		return layer[0][0][0];
 	}
 	
 	
