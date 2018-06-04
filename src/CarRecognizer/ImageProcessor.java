@@ -11,8 +11,6 @@ import java.io.InputStream;
 import javax.imageio.ImageIO;
 
 public class ImageProcessor {
-
-	
 	/**
 	 * scale image
 	 * 
@@ -35,17 +33,10 @@ public class ImageProcessor {
 	    return dbi;
 	}
 	
-	public static void compressImages(String inDir, String outDir, int imgCount) throws IOException{
-		for(int dataNum = 1; dataNum <= imgCount; dataNum++) {
-			String num = "0000"+dataNum;
-			num = num.substring(num.length()-5,num.length());
-			String fileName = num+".jpg";
-			
-			File img = new File(inDir+fileName);
-			if(!img.exists()) {
-				break;
-			}
-			InputStream inpStream = new BufferedInputStream(new FileInputStream(inDir+fileName));
+	public static void compressImages(String inDir, String outDir) throws IOException{
+		File dirin = new File(inDir);
+        for (final File f : dirin.listFiles()) {
+			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
 			
 			int dWidth = 640;
@@ -58,22 +49,23 @@ public class ImageProcessor {
 			if (! dir.exists()){
 		        dir.mkdirs();
 		    }
-			File file = new File(outDir+fileName);
+			File dirout = new File(outDir+f.getName());
 			
-			ImageIO.write(image, "jpg", file);
-		}
+			ImageIO.write(image, "jpg", dirout);
+        }
 	}
 	
-	private static final String trainInDir = "cars_train/";
-	private static final String trainOutDir = "cars_train_compressed/";
-	private static final String testInDir = "cars_test/";
-	private static final String testOutDir = "cars_test_compressed/";
+//	private static final String trainInDir = "cars_train/";
+//	private static final String trainOutDir = "cars_train_compressed/";
+//	private static final String testInDir = "cars_test/";
+//	private static final String testOutDir = "cars_test_compressed/";
+	private static final String trainInDir = "trees_train/";
+	private static final String trainOutDir = "trees_train_compressed/";
 	
-	private static final int totleCount = 8144;
 	public static void main(String[] args) throws IOException{
 		// TODO Auto-generated method stub
-		compressImages(trainInDir,trainOutDir,totleCount);
-		compressImages(testInDir,testOutDir,totleCount);
+		compressImages(trainInDir,trainOutDir);
+//		compressImages(testInDir,testOutDir);
 		
 	}
 }
