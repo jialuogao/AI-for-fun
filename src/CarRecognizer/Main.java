@@ -20,10 +20,12 @@ public class Main {
 	public static final String trainingNegDir = "trees_train_compressed/";
 	public static final String testingNegDir = "trees_test_compressed/";
 	private static Random generator = new Random();
-	private static Node[][] network;
+	//private static Node[][] network;
+	
+	private static boolean init;
+	private static double weights[][][][][][][][][];
 	public static void main(String[] args) throws IOException{
-		// TODO Auto-generated method stub
-		//loadInfoDataFile();
+		loadInfoDataFile();
 		//buildNN(NNInfo);
 		
 		File dirin = new File(trainingPosDir);
@@ -73,24 +75,31 @@ public class Main {
 /*18*/			{{5},{},{1}},				//			1
 		};
 	
-	private static final String datafile = "src/CarRecongnizer/info&dataFile.txt";
+	private static final String infofile = "src/CarRecongnizer/infoFile.txt";
+	private static final String datadir = "src/CarRecongnizer/Data/";
+	//for each layer, there is a data file naming as the layer number
 	public static void loadInfoDataFile() throws IOException{
-		BufferedReader file = new BufferedReader(new InputStreamReader(new FileInputStream(datafile)));
-		String line;
-		while((line = file.readLine()) != null) {
-			String[] detail = line.split(" ");
-			if(detail[0].equals("l")) {
-				if(true);
-			}
-			else if(detail[0].equals("d")) {
-				
+		//TODO:
+		File[] data = new File(datadir).listFiles();
+		if(data.length==0) {
+			init = true;
+		}
+		else {
+			init = false;
+			for(final File f: data) {
+				weights = 
 			}
 		}
-	}
+
+		//BufferedReader file = new BufferedReader(new InputStreamReader(new FileInputStream(datafile)));
+}
 	
 	public static void runNN(BufferedImage img, boolean isCar) throws IOException {
+		//TODO: multivariable
 		double target = isCar ? 1 : 0;
 		double pred = forwardPassing(img);
+		backwardPropagation(target, pred);
+		//TODO: or using recursion
 		System.out.println(pred >= 0.5 ? 1:0);
 		
 	}
@@ -137,7 +146,7 @@ public class Main {
 	}
 	
 	
-	//TODO
+	//TODO: check
 	public static double[][][] convolutional(double[][][] layer, double[][][] weights, int x, int y, int stride, int size, boolean init){
 		if(init) {
 			weights = new double[layer.length][y][x];
@@ -281,73 +290,63 @@ public class Main {
 		return layer;
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	public static void buildNN(int[][][] NNInfo) {
-		network = new Node[NNInfo.length][];
-		for(int layer = NNInfo.length-1; layer>-1; layer--) {
-			int[][] line = NNInfo[layer];
-			int type = line[0][0];
-			switch (type) {
-			case 0:
-				int nodeNum = line[2][0];
-				//create the layer
-				network[layer]= new Node[nodeNum];
-				int[] connection = line[1];
-				//create node and connect them to the network
-				for(int con = 0; con<connection.length;con++) {
-					//if dosen't exist, create and connect
-					if(network[layer][0]==null) {
-						for(int node = 0; node<nodeNum;node++) {
-							//create current node
-							Node currentNode = new Node();
-							int conNum = network[con].length;
-							//find each children from the first connection layer and add them to "children" 
-							for(int edge = 0; edge<conNum;edge++) {
-								Node childNode = network[con][edge];
-								double weight = generator.nextDouble();
-								NodeWeightWrapper child = new NodeWeightWrapper(childNode,weight);
-								currentNode.getChildren().add(child);
-							}
-							network[layer][node] = currentNode;
-						}
-					}
-					//connect without recreating
-					else {
-						for(int node = 0; node<nodeNum;node++) {
-							Node currentNode = network[layer][node];
-							int conNum = network[con].length;
-							for(int edge = 0; edge<conNum;edge++) {
-								Node childNode = network[con][edge];
-								double weight = generator.nextDouble();
-								NodeWeightWrapper child = new NodeWeightWrapper(childNode,weight);
-								currentNode.getChildren().add(child);
-							}
-						}
-					}
-				}
-				break;
-				//{{1},{2},{5,5,3,24}},		//Convol: filter size x, y, stride, node size	213*160*24
-			case 1:
-				
-			}
-		}
-	}
-
 }
+
+	
+	
+	
+//	
+//	
+//	
+//	public static void buildNN(int[][][] NNInfo) {
+//		network = new Node[NNInfo.length][];
+//		for(int layer = NNInfo.length-1; layer>-1; layer--) {
+//			int[][] line = NNInfo[layer];
+//			int type = line[0][0];
+//			switch (type) {
+//			case 0:
+//				int nodeNum = line[2][0];
+//				//create the layer
+//				network[layer]= new Node[nodeNum];
+//				int[] connection = line[1];
+//				//create node and connect them to the network
+//				for(int con = 0; con<connection.length;con++) {
+//					//if dosen't exist, create and connect
+//					if(network[layer][0]==null) {
+//						for(int node = 0; node<nodeNum;node++) {
+//							//create current node
+//							Node currentNode = new Node();
+//							int conNum = network[con].length;
+//							//find each children from the first connection layer and add them to "children" 
+//							for(int edge = 0; edge<conNum;edge++) {
+//								Node childNode = network[con][edge];
+//								double weight = generator.nextDouble();
+//								NodeWeightWrapper child = new NodeWeightWrapper(childNode,weight);
+//								currentNode.getChildren().add(child);
+//							}
+//							network[layer][node] = currentNode;
+//						}
+//					}
+//					//connect without recreating
+//					else {
+//						for(int node = 0; node<nodeNum;node++) {
+//							Node currentNode = network[layer][node];
+//							int conNum = network[con].length;
+//							for(int edge = 0; edge<conNum;edge++) {
+//								Node childNode = network[con][edge];
+//								double weight = generator.nextDouble();
+//								NodeWeightWrapper child = new NodeWeightWrapper(childNode,weight);
+//								currentNode.getChildren().add(child);
+//							}
+//						}
+//					}
+//				}
+//				break;
+//				//{{1},{2},{5,5,3,24}},		//Convol: filter size x, y, stride, node size	213*160*24
+//			case 1:
+//				
+//			}
+//		}
+//	}
+//
+//}
