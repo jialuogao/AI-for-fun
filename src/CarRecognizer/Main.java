@@ -24,7 +24,7 @@ public class Main {
 	
 	private static boolean init;
 	private static double weights[][][][][][][][][];
-	public static void main(String[] args) throws IOException{
+	public static void main(String[] args) throws Exception{
 		loadInfoDataFile();
 		//buildNN(NNInfo);
 		
@@ -75,26 +75,48 @@ public class Main {
 /*18*/			{{5},{},{1}},				//			1
 		};
 	
-	private static final String infofile = "src/CarRecongnizer/infoFile.txt";
-	private static final String datadir = "src/CarRecongnizer/Data/";
+	private static final String infofile = "src/CarRecognizer/infoFile.txt";
+	private static final String datadir = "src/CarRecognizer/Data/";
 	//for each layer, there is a data file naming as the layer number
-	public static void loadInfoDataFile() throws IOException{
+	public static void loadInfoDataFile() throws Exception{
 		//TODO:
-		File[] data = new File(datadir).listFiles();
-		if(data.length==0) {
-			init = true;
-		}
+		//see if dir exist
+		File dataFile = new File(datadir);
+		if (! dataFile.exists()){
+	        dataFile.mkdirs();
+	        init = true;
+	    }
 		else {
-			init = false;
-			for(final File f: data) {
-				weights = 
+			//no file exist, initiate weights
+			File[] data = dataFile.listFiles();
+			if(data.length==0) {
+				init = true;
 			}
+			else {
+				//data file present, load data
+				init = false;
+				BufferedReader layerInfo = new BufferedReader(new InputStreamReader(new FileInputStream(infofile)));
+				String line;
+				while((line = layerInfo.readLine())!=null) {
+					String layerNum = line . get layer number
+					boolean hasFile = false;
+					for(final File f: data) {
+						if(f.getName().equals(layerNum)) {
+							hasFile = true;
+							//weights = 
+						}
+					}
+					if(!hasFile) {
+						throw new Exception("Data file missing");
+					}
+					
+				}
+			}			
 		}
 
-		//BufferedReader file = new BufferedReader(new InputStreamReader(new FileInputStream(datafile)));
 }
 	
-	public static void runNN(BufferedImage img, boolean isCar) throws IOException {
+	public static void runNN(BufferedImage img, boolean isCar) {
 		//TODO: multivariable
 		double target = isCar ? 1 : 0;
 		double pred = forwardPassing(img);
@@ -104,7 +126,7 @@ public class Main {
 		
 	}
 	
-	public static double forwardPassing(BufferedImage img) throws IOException{
+	public static double forwardPassing(BufferedImage img){
 		
 		int dWidth = img.getWidth();
 		int dHeight = img.getHeight();
