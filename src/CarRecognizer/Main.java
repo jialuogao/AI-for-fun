@@ -33,7 +33,7 @@ public class Main {
 			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
 			boolean isCar = true;
-			runNN(image, isCar);
+			train(image, isCar);
         }
         
         dirin = new File(trainingNegDir);
@@ -41,7 +41,7 @@ public class Main {
 			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
 			boolean isCar = true;
-			runNN(image, isCar);
+			train(image, isCar);
         }
 		
 	}
@@ -52,22 +52,22 @@ public class Main {
 
 /*1*/			{{1},{2},{5,5,3,24}},		//Convol: filter size x, y, stride, node size	213*160*24
 /*2*/			{{2},{3}},					//ReLU
-/*3*/			{{3},{4,7},{2,2}},			//MaxPool	107*80*24
+/*3*/			{{3},{4,7},{2,2,2}},			//MaxPool	107*80*24
 
 /*4*/			{{1},{5},{5,5,1,18}},		//Convol	103*76*18
 /*5*/			{{2},{6}},
-/*6*/			{{3},{7,8},{2,2}},			//			52*38*18
+/*6*/			{{3},{7,8},{2,2,2}},			//			52*38*18
 
 /*7*/			{{4},{8,9},{120}},			//Full		120
 /*8*/			{{4},{9,12},{120}},			//Full		120
 
 /*9*/			{{1},{10},{5,5,1,48}},		//			48*34*48
 /*10*/			{{2},{11}},
-/*11*/			{{3},{12,15},{2,2}},		//			24*17*48
+/*11*/			{{3},{12,15},{2,2,2}},		//			24*17*48
 
 /*12*/			{{1},{13},{3,3,1,96}},		//			22*15*96
 /*13*/			{{2},{14}},
-/*14*/			{{3},{15,16},{2,2}},		//			11*8*96
+/*14*/			{{3},{15,16},{2,2,2}},		//			11*8*96
 
 /*15*/			{{4},{16,17},{120}},		//			120
 /*16*/			{{4},{17},{180}},			//			180
@@ -116,18 +116,18 @@ public class Main {
 
 }
 	
-	public static void runNN(BufferedImage img, boolean isCar) {
+	public static void train(BufferedImage img, boolean isCar) {
 		//TODO: multivariable
-		double target = isCar ? 1 : 0;
-		double pred = forwardPassing(img);
-		backwardPropagation(target, pred);
-		//TODO: or using recursion
-		System.out.println(pred >= 0.5 ? 1:0);
+		final double target = isCar ? 1 : 0;
+		double pred = runNN(img, info, true,target);
+		
 		
 	}
 	
-	public static double forwardPassing(BufferedImage img){
-		
+	public static double runNN(BufferedImage img, String[][][] info, boolean isTraining, double target) throws Exception{
+		if(!info[0][0][0].equals("0")) {
+			throw new Exception("Info file error, did not start with an input layer");
+		}
 		int dWidth = img.getWidth();
 		int dHeight = img.getHeight();
 		double[][][] layer = new double[3][dHeight][dWidth];
@@ -148,25 +148,102 @@ public class Main {
 				}
 			}
 		}
-		boolean init = true;
-		layer = convolutional(layer, new double[0][0][0], 5, 5, 3, 24, true);
+		layer = convolutional(layer, new double[0][0][0], 5, 5, 3, 24, init);
 		layer = relu(layer);
 		layer = maxpool(layer, 3, 3, 3);
-		layer = convolutional(layer, new double[0][0][0], 5, 5, 1, 18, true);
+		layer = convolutional(layer, new double[0][0][0], 5, 5, 1, 18, init);
 		layer = relu(layer);
 		layer = maxpool(layer, 2, 2, 2);
-		layer = convolutional(layer, new double[0][0][0], 3, 3, 1, 48, true);
+		layer = convolutional(layer, new double[0][0][0], 3, 3, 1, 48, init);
 		layer = relu(layer);
 		layer = maxpool(layer, 2, 2, 2);
 		//if training: layer = dropout(layer, 0.3);
-		layer = weightedsum(layer, new double[0][0][0][0], 120, true);
-		layer = weightedsum(layer, new double[0][0][0][0], 180, true);
-		layer = weightedsum(layer, new double[0][0][0][0], 80, true);
-		layer = weightedsum(layer, new double[0][0][0][0], 1, true);
+		layer = weightedsum(layer, new double[0][0][0][0], 120, init);
+		layer = weightedsum(layer, new double[0][0][0][0], 180, init);
+		layer = weightedsum(layer, new double[0][0][0][0], 80, init);
+		layer = weightedsum(layer, new double[0][0][0][0], 1, init);
 		layer = softmax(layer);
 		return layer[0][0][0];
 	}
-	
+
+	public static double[][][] nextLayer(double[][][] layer, String[][][] info, int layerNum, boolean isTraining, final double target){
+		int type = Integer.parseInt(info[layerNum][0][0]);
+		double[][][] deltaWeights;
+		switch(type) {
+		//convolutional
+		case 1:
+			layer = convolutional(layer, weightmatrix, Integer.parseInt(info[layerNum][2][0]), Integer.parseInt(info[layerNum][2][1]), Integer.parseInt(info[layerNum][2][2]), Integer.parseInt(info[layerNum][2][3]), init);
+			if(layerNum<layer.length-1) {
+				deltaWeights = nextLayer(layer,info,layerNum+1,isTraining,target);
+			}
+			if(isTraining) {
+				backpropagation{
+					change weights
+				}
+			}
+			return deltaWeights;
+			break;
+		//ReLU
+		case 2:
+			layer = relu(layer);
+			if(layerNum<layer.length-1) {
+				deltaWeights = nextLayer(layer, info, layerNum+1, isTraining,target);
+			}
+			return deltaWeights;
+			break;
+		//Max pooling
+		case 3:
+			layer = maxpool(layer, Integer.parseInt(info[layerNum][2][0]), Integer.parseInt(info[layerNum][2][1]), Integer.parseInt(info[layerNum][2][2]));
+			if(layerNum<layer.length-1) {
+				deltaWeights = nextLayer(layer,info,layerNum+1,isTraining,target);
+			}
+			return deltaWeights;
+			break;
+		//weighted sum
+		case 4:
+			layer = weightedsum(layer, new double[0][0][0][0], 120, init);
+			if(layerNum<layer.length-1) {
+				deltaWeights = nextLayer(layer,info,layerNum+1,isTraining);
+			}
+			if(isTraining) {
+				backpropagation;
+			}
+			return deltaWeights;
+			break;
+		//soft max
+		case 5:
+			layer = softmax(layer);
+			if(layerNum<layer.length-1) {
+				nextLayer(layer,info,layerNum+1,isTraining,target);
+			}
+			else {
+				System.out.println("Prediction ended at layer "+layerNum);
+				System.out.println("The prediction is:");
+				double pred = layer[0][0][0];
+				System.out.println(pred >= 0.5 ? "is a car":"is not a car");
+				
+				if(isTraining) {
+					double delta = target - pred;
+					deltaWeights = new double[][][] = {{{delta}}};
+				}
+			}
+			return deltaWeights;
+			break;
+		//drop out
+		case 6:
+			if(isTraining) {
+				layer = dropout(layer, 0.3);				
+			}
+			else {
+				deltaWeights = nextLayer(layer, info, layerNum+1, isTraining, target);
+			}
+			return deltaWeights;
+			break;
+		default:
+			throw new Exception("Unknown layer type");
+			break;
+		}
+	}
 	
 	//TODO: check
 	public static double[][][] convolutional(double[][][] layer, double[][][] weights, int x, int y, int stride, int size, boolean init){
