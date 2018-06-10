@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
@@ -26,7 +27,6 @@ public class Main {
 	private static double weights[][][][][][][][][];
 	public static void main(String[] args) throws Exception{
 		loadInfoDataFile();
-		//buildNN(NNInfo);
 		
 		File dirin = new File(trainingPosDir);
         for (final File f : dirin.listFiles()) {
@@ -45,8 +45,8 @@ public class Main {
         }
 		
 	}
-	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max
-	private static int[][][] NNInfo = 
+	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max, 6 Droop out
+	private static int[][][] info = 
 		{//Type of the layer, Layers it connects to, Layer Information
 /*0*/			{{0},{1,4},{921600}},			//Input	640x480x3
 
@@ -77,10 +77,32 @@ public class Main {
 	
 	private static final String infofile = "src/CarRecognizer/infoFile.txt";
 	private static final String datadir = "src/CarRecognizer/Data/";
+	
 	//for each layer, there is a data file naming as the layer number
 	public static void loadInfoDataFile() throws Exception{
-		//TODO:
 		//see if dir exist
+		File infoFile = new File(infofile);
+		if(! infoFile.exists()) {
+			throw new Exception("No valid info file found");
+		}
+		else {
+			BufferedReader layerInfo = new BufferedReader(new InputStreamReader(new FileInputStream(infoFile)));
+			String line;
+			int layerNum = 0;
+			while((line = layerInfo.readLine())!=null) {
+				String[] lineInfo = line.split(" ");
+				String[] layerDetail = lineInfo[1].split(",");
+				info[layerNum] = new int[lineInfo.length][];
+				info[layerNum][0][0] = Integer.parseInt(lineInfo[0]);
+				info[layerNum][1] = new int[layerDetail.length];
+				for(int i = 0;i<layerDetail.length;i++) {
+					info[layerNum][1][i] = Integer.parseInt(layerDetail[i]);
+				}
+			}
+			
+			Integer[][][] i = Arrays.stream( info ).toArray( Integer[][][]::new );
+			ImageProcessor.print3dMatrix(i);
+		}
 		File dataFile = new File(datadir);
 		if (! dataFile.exists()){
 	        dataFile.mkdirs();
@@ -95,14 +117,13 @@ public class Main {
 			else {
 				//data file present, load data
 				init = false;
-				BufferedReader layerInfo = new BufferedReader(new InputStreamReader(new FileInputStream(infofile)));
-				String line;
-				while((line = layerInfo.readLine())!=null) {
-					String layerNum = line . get layer number
+				for(int[][] l:info) {
+					String layerNum = l[0][0]+"";
 					boolean hasFile = false;
 					for(final File f: data) {
 						if(f.getName().equals(layerNum)) {
 							hasFile = true;
+							//TODO:read in data
 							//weights = 
 						}
 					}
@@ -113,19 +134,18 @@ public class Main {
 				}
 			}			
 		}
-
-}
+	}
 	
-	public static void train(BufferedImage img, boolean isCar) {
+	public static void train(BufferedImage img, boolean isCar) throws Exception {
 		//TODO: multivariable
 		final double target = isCar ? 1 : 0;
-		double pred = runNN(img, info, true,target);
+		runNN(img, true,target);
 		
 		
 	}
 	
-	public static double runNN(BufferedImage img, String[][][] info, boolean isTraining, double target) throws Exception{
-		if(!info[0][0][0].equals("0")) {
+	public static void runNN(BufferedImage img, boolean isTraining, double target) throws Exception{
+		if(info[0][0][0]!=0) {
 			throw new Exception("Info file error, did not start with an input layer");
 		}
 		int dWidth = img.getWidth();
@@ -148,33 +168,34 @@ public class Main {
 				}
 			}
 		}
-		layer = convolutional(layer, new double[0][0][0], 5, 5, 3, 24, init);
-		layer = relu(layer);
-		layer = maxpool(layer, 3, 3, 3);
-		layer = convolutional(layer, new double[0][0][0], 5, 5, 1, 18, init);
-		layer = relu(layer);
-		layer = maxpool(layer, 2, 2, 2);
-		layer = convolutional(layer, new double[0][0][0], 3, 3, 1, 48, init);
-		layer = relu(layer);
-		layer = maxpool(layer, 2, 2, 2);
-		//if training: layer = dropout(layer, 0.3);
-		layer = weightedsum(layer, new double[0][0][0][0], 120, init);
-		layer = weightedsum(layer, new double[0][0][0][0], 180, init);
-		layer = weightedsum(layer, new double[0][0][0][0], 80, init);
-		layer = weightedsum(layer, new double[0][0][0][0], 1, init);
-		layer = softmax(layer);
-		return layer[0][0][0];
+		nextLayer(layer,0,isTraining,target);
+//		layer = convolutional(layer, new double[0][0][0], 5, 5, 3, 24, init);
+//		layer = relu(layer);
+//		layer = maxpool(layer, 3, 3, 3);
+//		layer = convolutional(layer, new double[0][0][0], 5, 5, 1, 18, init);
+//		layer = relu(layer);
+//		layer = maxpool(layer, 2, 2, 2);
+//		layer = convolutional(layer, new double[0][0][0], 3, 3, 1, 48, init);
+//		layer = relu(layer);
+//		layer = maxpool(layer, 2, 2, 2);
+//		//if training: layer = dropout(layer, 0.3);
+//		layer = weightedsum(layer, new double[0][0][0][0], 120, init);
+//		layer = weightedsum(layer, new double[0][0][0][0], 180, init);
+//		layer = weightedsum(layer, new double[0][0][0][0], 80, init);
+//		layer = weightedsum(layer, new double[0][0][0][0], 1, init);
+//		layer = softmax(layer);
+//		return layer[0][0][0];
 	}
 
-	public static double[][][] nextLayer(double[][][] layer, String[][][] info, int layerNum, boolean isTraining, final double target){
-		int type = Integer.parseInt(info[layerNum][0][0]);
+	public static double[][][] nextLayer(double[][][] layer, int layerNum, boolean isTraining, final double target){
+		int type = info[layerNum][0][0];
 		double[][][] deltaWeights;
 		switch(type) {
 		//convolutional
 		case 1:
-			layer = convolutional(layer, weightmatrix, Integer.parseInt(info[layerNum][2][0]), Integer.parseInt(info[layerNum][2][1]), Integer.parseInt(info[layerNum][2][2]), Integer.parseInt(info[layerNum][2][3]), init);
+			layer = convolutional(layer, weightmatrix, info[layerNum][1][0], info[layerNum][1][1], info[layerNum][1][2], info[layerNum][1][3], init);
 			if(layerNum<layer.length-1) {
-				deltaWeights = nextLayer(layer,info,layerNum+1,isTraining,target);
+				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
 			if(isTraining) {
 				backpropagation{
@@ -187,15 +208,15 @@ public class Main {
 		case 2:
 			layer = relu(layer);
 			if(layerNum<layer.length-1) {
-				deltaWeights = nextLayer(layer, info, layerNum+1, isTraining,target);
+				deltaWeights = nextLayer(layer, layerNum+1, isTraining,target);
 			}
 			return deltaWeights;
 			break;
 		//Max pooling
 		case 3:
-			layer = maxpool(layer, Integer.parseInt(info[layerNum][2][0]), Integer.parseInt(info[layerNum][2][1]), Integer.parseInt(info[layerNum][2][2]));
+			layer = maxpool(layer, info[layerNum][1][0], info[layerNum][1][1], info[layerNum][1][2]);
 			if(layerNum<layer.length-1) {
-				deltaWeights = nextLayer(layer,info,layerNum+1,isTraining,target);
+				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
 			return deltaWeights;
 			break;
@@ -203,7 +224,7 @@ public class Main {
 		case 4:
 			layer = weightedsum(layer, new double[0][0][0][0], 120, init);
 			if(layerNum<layer.length-1) {
-				deltaWeights = nextLayer(layer,info,layerNum+1,isTraining);
+				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
 			if(isTraining) {
 				backpropagation;
