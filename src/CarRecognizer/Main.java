@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -22,9 +23,8 @@ public class Main {
 	public static final String testingNegDir = "trees_test_compressed/";
 	private static Random generator = new Random();
 	//private static Node[][] network;
-	
+	private static ArrayList weights = new ArrayList();
 	private static boolean init;
-	private static double weights[][][][][][][][][];
 	public static void main(String[] args) throws Exception{
 		loadInfoDataFile();
 		
@@ -40,10 +40,23 @@ public class Main {
         for (final File f : dirin.listFiles()) {
 			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
-			boolean isCar = true;
+			boolean isCar = false;
 			train(image, isCar);
         }
 		
+        File testin = new File(testingPosDir);
+        for (final File f : testin.listFiles()) {
+			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+			BufferedImage image = ImageIO.read(inpStream);
+			predict(image);
+        }
+        
+        testin = new File(testingNegDir);
+        for (final File f : testin.listFiles()) {
+			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+			BufferedImage image = ImageIO.read(inpStream);
+			predict(image);
+        }
 	}
 	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max, 6 Droop out
 	private static int[][][] info = 
@@ -124,7 +137,7 @@ public class Main {
 						if(f.getName().equals(layerNum)) {
 							hasFile = true;
 							//TODO:read in data
-							//weights = 
+							weights = 
 						}
 					}
 					if(!hasFile) {
@@ -140,8 +153,10 @@ public class Main {
 		//TODO: multivariable
 		final double target = isCar ? 1 : 0;
 		runNN(img, true,target);
-		
-		
+	}
+	
+	public static void predict(BufferedImage img) throws Exception{
+		runNN(img, false, 0);
 	}
 	
 	public static void runNN(BufferedImage img, boolean isTraining, double target) throws Exception{
@@ -166,6 +181,11 @@ public class Main {
 						layer[color][y][x] = c.getGreen();
 					}
 				}
+			}
+		}
+		if(init) {
+			for(int i = 0; i<info.length;i++) {
+				weights.add(null);
 			}
 		}
 		nextLayer(layer,0,isTraining,target);
@@ -193,7 +213,22 @@ public class Main {
 		switch(type) {
 		//convolutional
 		case 1:
-			layer = convolutional(layer, weightmatrix, info[layerNum][1][0], info[layerNum][1][1], info[layerNum][1][2], info[layerNum][1][3], init);
+			int x = info[layerNum][1][0];
+			int y = info[layerNum][1][1];
+			
+			if(init) {
+				double[][][] weightmatrix = new double[layer.length][y][x];
+				for(int z=0;z<weightmatrix.length;z++) {
+					for(int height=0;height<y;height++) {
+						for(int width=0;width<x;width++) {
+							weightmatrix[z][height][width]=generator.nextDouble();
+						}
+					}
+				}
+				weights.set(layerNum, weightmatrix);
+			}
+			
+			layer = convolutional(layer, (double[][][])weights.get(layerNum), x, y, info[layerNum][1][2], info[layerNum][1][3]);
 			if(layerNum<layer.length-1) {
 				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
@@ -222,7 +257,22 @@ public class Main {
 			break;
 		//weighted sum
 		case 4:
-			layer = weightedsum(layer, new double[0][0][0][0], 120, init);
+			int size = info[layerNum][1][0];
+			if(init) {
+				double[][][][] weightmatrix = new double[size+1][layer.length][layer[0].length][layer[0][0].length];
+				for(int node = 0;node<weightmatrix.length;node++) {
+					for(int k=0;k<weightmatrix[node].length;k++) {
+						for(int j=0;j<weightmatrix[node][k].length;j++) {
+							for(int i=0;i<weightmatrix[node][k][j].length;i++) {
+								weightmatrix[node][k][j][i]=generator.nextDouble();
+							}
+						}
+					}
+				}
+				weights.set(layerNum, weightmatrix);
+			}
+			
+			layer = weightedsum(layer, (double[][][][])weights.get(layerNum), size);
 			if(layerNum<layer.length-1) {
 				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
@@ -267,19 +317,7 @@ public class Main {
 	}
 	
 	//TODO: check
-	public static double[][][] convolutional(double[][][] layer, double[][][] weights, int x, int y, int stride, int size, boolean init){
-		if(init) {
-			weights = new double[layer.length][y][x];
-			for(int z=0;z<weights.length;z++) {
-				for(int height=0;height<y;height++) {
-					for(int width=0;width<x;width++) {
-						weights[z][height][width]=generator.nextDouble();
-					}
-				}
-			}
-		}
-		
-		
+	public static double[][][] convolutional(double[][][] layer, double[][][] weights, int x, int y, int stride, int size){
 		int newx = (int)(Math.ceil((layer[0][0].length - x)/stride) + 1);
 		int newy = (int)(Math.ceil((layer[0].length - y)/stride) + 1);
 		double [][][] newLayer = new double[size][newy][newx];
@@ -365,20 +403,7 @@ public class Main {
 		return layer;
 	}
 	//??
-	public static double[][][] weightedsum(double[][][] layer, double[][][][] weights, int size, boolean init){
-		if(init) {
-			weights = new double[size+1][layer.length][layer[0].length][layer[0][0].length];
-			for(int node = 0;node<weights.length;node++) {
-				for(int z=0;z<weights[node].length;z++) {
-					for(int y=0;y<weights[node][z].length;y++) {
-						for(int x=0;x<weights[node][z][y].length;x++) {
-							weights[node][z][y][x]=generator.nextDouble();
-						}
-					}
-				}
-			}
-		}
-		
+	public static double[][][] weightedsum(double[][][] layer, double[][][][] weights, int size){
 		double[][][] newLayer = new double[1][1][size+1];
 		//add bias
 		newLayer[0][0][size] = 1;
