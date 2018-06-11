@@ -31,54 +31,55 @@ public class Main {
 	private static boolean init;
 	public static void main(String[] args) throws Exception{
 		loadInfoDataFile();
-		writeDataFile();
-//		File dirin = new File(trainingPosDir);
-//		int versionCount = 0;
-//        for (final File f : dirin.listFiles()) {
-//			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
-//			BufferedImage image = ImageIO.read(inpStream);
-//			boolean isCar = true;
-//			train(image, isCar);
-//			versionCount++;
-//			if(versionCount==100) {
-//				writeDataFile();
-//				versionCount = 0;
-//			}
-//        }
-//        
-//        versionCount = 0;
-//        dirin = new File(trainingNegDir);
-//        for (final File f : dirin.listFiles()) {
-//			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
-//			BufferedImage image = ImageIO.read(inpStream);
-//			boolean isCar = false;
-//			train(image, isCar);
-//			versionCount++;
-//			if(versionCount==100) {
-//				writeDataFile();
-//				versionCount = 0;
-//			}
-//        }
-//		
-//        File testin = new File(testingPosDir);
-//        for (final File f : testin.listFiles()) {
-//			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
-//			BufferedImage image = ImageIO.read(inpStream);
-//			predict(image);
-//        }
-//        
-//        testin = new File(testingNegDir);
-//        for (final File f : testin.listFiles()) {
-//			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
-//			BufferedImage image = ImageIO.read(inpStream);
-//			predict(image);
-//        }
+		//writeDataFile();
+		File dirin = new File(trainingPosDir);
+		int versionCount = 0;
+        for (final File f : dirin.listFiles()) {
+			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+			BufferedImage image = ImageIO.read(inpStream);
+			boolean isCar = true;
+			train(image, isCar);
+			versionCount++;
+			if(versionCount==100) {
+				writeDataFile();
+				versionCount = 0;
+			}
+        }
+        
+        versionCount = 0;
+        dirin = new File(trainingNegDir);
+        for (final File f : dirin.listFiles()) {
+			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+			BufferedImage image = ImageIO.read(inpStream);
+			boolean isCar = false;
+			train(image, isCar);
+			versionCount++;
+			if(versionCount==100) {
+				writeDataFile();
+				versionCount = 0;
+			}
+        }
+		
+        File testin = new File(testingPosDir);
+        for (final File f : testin.listFiles()) {
+			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+			BufferedImage image = ImageIO.read(inpStream);
+			predict(image);
+        }
+        
+        testin = new File(testingNegDir);
+        for (final File f : testin.listFiles()) {
+			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+			BufferedImage image = ImageIO.read(inpStream);
+			predict(image);
+        }
 	}
 	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max, 6 Droop out
 	private static int[][][] info;
 	
 	private static final String infofile = "src/CarRecognizer/infoFile.txt";
 	private static final String datadir = "src/CarRecognizer/Data/";
+	private static final String datadir1 = "src/CarRecognizer/Data2/";
 	
 	public static void writeDataFile() throws Exception{
 		//System.out.println("writeDataFile");
@@ -174,12 +175,13 @@ public class Main {
 			}
 			else {
 				//data file present, load data
+				//System.out.println("loading data");
 				init = false;
 				for(int i = 0; i<info.length; i++) {
 					weights.add(null);
 				}
 				for(int layerNum = 0; layerNum<info.length;layerNum++) {
-					String numStr = layerNum+"";
+					String numStr = layerNum+".txt";
 					for(final File f: data) {
 						if(f.getName().equals(numStr)) {
 							//TODO:read in data
@@ -190,9 +192,11 @@ public class Main {
 								String line;
 								int lineNum = 0;
 								while((line = reader.readLine()) != null) {
-									String[] d2 = line.split(" ");
+									String[] d2 = Arrays.stream(line.split(", ")).filter(val->val!=null&&val.length()>0).toArray(size->new String[size]);
 									for(int i=0;i<d2.length;i++) {
-										weight[lineNum][i] = Stream.of(d2[i].split(",")).mapToDouble(Double::parseDouble).toArray();
+										String[] d1 = d2[i].split(",");
+										String[] removeNull = Arrays.stream(d1).filter(val -> val!=null && val.length()>0).toArray(size->new String[size]);
+										weight[lineNum][i] = Stream.of(removeNull).mapToDouble(Double::parseDouble).toArray();
 									}
 									lineNum++;
 								}
@@ -203,9 +207,11 @@ public class Main {
 								for(int j =0; j<detail[0];j++) {
 									String line = reader.readLine();
 									for(int lineNum=0;lineNum<detail[1];lineNum++) {
-										String[] d2 = line.split(" ");
+										String[] d2 = Arrays.stream(line.split(", ")).filter(val->val!=null&&val.length()>0).toArray(size->new String[size]);
 										for(int i=0;i<d2.length;i++) {
-											weight[j][lineNum][i] = Stream.of(d2[i].split(",")).mapToDouble(Double::parseDouble).toArray();
+											String[] d1 = d2[i].split(",");
+											String[] removeNull = Arrays.stream(d1).filter(val -> val!=null && val.length()>0).toArray(size->new String[size]);
+											weight[j][lineNum][i] = Stream.of(removeNull).mapToDouble(Double::parseDouble).toArray();
 										}
 									}
 								}
@@ -366,7 +372,9 @@ public class Main {
 				System.out.println("The prediction is:");
 				double pred = layer[0][0][0];
 				System.out.println(pred >= 0.5 ? "is a car":"is not a car");
-				
+				if(init) {
+					init = false;
+				}
 				if(isTraining) {
 					double delta = target - pred;
 					double[][][] d = {{{delta}}};
