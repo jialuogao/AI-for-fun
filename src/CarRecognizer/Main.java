@@ -4,11 +4,14 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
@@ -29,19 +32,31 @@ public class Main {
 		loadInfoDataFile();
 		
 		File dirin = new File(trainingPosDir);
+		int versionCount = 0;
         for (final File f : dirin.listFiles()) {
 			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
 			boolean isCar = true;
 			train(image, isCar);
+			versionCount++;
+			if(versionCount==100) {
+				writeDataFile();
+				versionCount = 0;
+			}
         }
         
+        versionCount = 0;
         dirin = new File(trainingNegDir);
         for (final File f : dirin.listFiles()) {
 			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
 			boolean isCar = false;
 			train(image, isCar);
+			versionCount++;
+			if(versionCount==100) {
+				writeDataFile();
+				versionCount = 0;
+			}
         }
 		
         File testin = new File(testingPosDir);
@@ -59,38 +74,60 @@ public class Main {
         }
 	}
 	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max, 6 Droop out
-	private static int[][][] info = 
-		{//Type of the layer, Layers it connects to, Layer Information
-/*0*/			{{0},{1,4},{921600}},			//Input	640x480x3
-
-/*1*/			{{1},{2},{5,5,3,24}},		//Convol: filter size x, y, stride, node size	213*160*24
-/*2*/			{{2},{3}},					//ReLU
-/*3*/			{{3},{4,7},{2,2,2}},			//MaxPool	107*80*24
-
-/*4*/			{{1},{5},{5,5,1,18}},		//Convol	103*76*18
-/*5*/			{{2},{6}},
-/*6*/			{{3},{7,8},{2,2,2}},			//			52*38*18
-
-/*7*/			{{4},{8,9},{120}},			//Full		120
-/*8*/			{{4},{9,12},{120}},			//Full		120
-
-/*9*/			{{1},{10},{5,5,1,48}},		//			48*34*48
-/*10*/			{{2},{11}},
-/*11*/			{{3},{12,15},{2,2,2}},		//			24*17*48
-
-/*12*/			{{1},{13},{3,3,1,96}},		//			22*15*96
-/*13*/			{{2},{14}},
-/*14*/			{{3},{15,16},{2,2,2}},		//			11*8*96
-
-/*15*/			{{4},{16,17},{120}},		//			120
-/*16*/			{{4},{17},{180}},			//			180
-/*17*/			{{4},{18},{80}},			//			80
-/*18*/			{{5},{},{1}},				//			1
-		};
+	private static int[][][] info;
 	
 	private static final String infofile = "src/CarRecognizer/infoFile.txt";
 	private static final String datadir = "src/CarRecognizer/Data/";
 	
+	public static void writeDataFile() throws Exception{
+		//System.out.println("writeDataFile");
+		for(int i=0;i<weights.size();i++) {
+			if(weights.get(i)!=null) {
+				if(weights.get(i).getClass().equals(new double[0][][].getClass())) {
+					double[][][] weightmatrix = (double[][][])weights.get(i);
+					BufferedWriter writer = new BufferedWriter(new FileWriter(datadir+i+".txt"));
+					int z = weightmatrix.length, y = weightmatrix[0].length, x = weightmatrix[0][0].length;
+					writer.write(z+" "+y+" "+x);
+					writer.newLine();
+					for(double[][] plane: weightmatrix) {
+						String line = "";
+						for(double[] row: plane) {
+							for(double data: row) {
+								line+=data+",";
+							}
+							line+=" ";
+						}
+						writer.write(line);
+						writer.newLine();
+					}
+					writer.close();
+				}
+				else if(weights.get(i).getClass().equals(new double[0][][][].getClass())) {
+					double[][][][] weightmatrix = (double[][][][])weights.get(i);
+					BufferedWriter writer = new BufferedWriter(new FileWriter(datadir+i+".txt"));
+					int z = weightmatrix.length, y = weightmatrix[0].length, x = weightmatrix[0][0].length, a = weightmatrix[0][0][0].length;
+					writer.write(z+" "+y+" "+x+" "+a);
+					writer.newLine();
+					for(double[][][] cube: weightmatrix) {
+						for(double[][] plane: cube) {
+							String line = "";
+							for(double[] row: plane) {
+								for(double data: row) {
+									line+=data+",";
+								}
+								line+=" ";
+							}
+							writer.write(line);
+							writer.newLine();
+						}
+						writer.newLine();
+					}
+					writer.close();
+				}				
+			}
+		}
+		System.out.println("Writing complated!");
+	}
 	//for each layer, there is a data file naming as the layer number
 	public static void loadInfoDataFile() throws Exception{
 		//see if dir exist
@@ -99,6 +136,11 @@ public class Main {
 			throw new Exception("No valid info file found");
 		}
 		else {
+			LineNumberReader lineNumReader = new LineNumberReader(new InputStreamReader(new FileInputStream(infoFile)));
+			while ((lineNumReader.readLine()) != null);
+	        int length = lineNumReader.getLineNumber();
+	        info = new int[length][][];
+	        
 			BufferedReader layerInfo = new BufferedReader(new InputStreamReader(new FileInputStream(infoFile)));
 			String line;
 			int layerNum = 0;
@@ -106,15 +148,17 @@ public class Main {
 				String[] lineInfo = line.split(" ");
 				String[] layerDetail = lineInfo[1].split(",");
 				info[layerNum] = new int[lineInfo.length][];
-				info[layerNum][0][0] = Integer.parseInt(lineInfo[0]);
+				int[] temp= {Integer.parseInt(lineInfo[0])};
+				info[layerNum][0] = temp;
 				info[layerNum][1] = new int[layerDetail.length];
 				for(int i = 0;i<layerDetail.length;i++) {
+					if(layerDetail[i].equals("null")) {
+						layerDetail[i]="-1";
+					}
 					info[layerNum][1][i] = Integer.parseInt(layerDetail[i]);
 				}
+				layerNum++;
 			}
-			
-			Integer[][][] i = Arrays.stream( info ).toArray( Integer[][][]::new );
-			ImageProcessor.print3dMatrix(i);
 		}
 		File dataFile = new File(datadir);
 		if (! dataFile.exists()){
@@ -130,20 +174,24 @@ public class Main {
 			else {
 				//data file present, load data
 				init = false;
-				for(int[][] l:info) {
-					String layerNum = l[0][0]+"";
-					boolean hasFile = false;
+				for(int i = 0; i<info.length; i++) {
+					weights.add(null);
+				}
+				for(int layerNum = 0; layerNum<info.length;layerNum++) {
+					String numStr = layerNum+"";
 					for(final File f: data) {
-						if(f.getName().equals(layerNum)) {
-							hasFile = true;
+						if(f.getName().equals(numStr)) {
 							//TODO:read in data
-							weights = 
+							if(info[0][0][0] == 1) {
+								double[][][] weight = new double[][][];
+								weights.set(layerNum, weight); 
+							}
+							else if(info[0][0][0] == 4) {
+								double[][][][] weight = new double[][][][];
+								weights.set(layerNum, weight);
+							}
 						}
 					}
-					if(!hasFile) {
-						throw new Exception("Data file missing");
-					}
-					
 				}
 			}			
 		}
@@ -160,6 +208,7 @@ public class Main {
 	}
 	
 	public static void runNN(BufferedImage img, boolean isTraining, double target) throws Exception{
+		//System.out.println("runNN");
 		if(info[0][0][0]!=0) {
 			throw new Exception("Info file error, did not start with an input layer");
 		}
@@ -207,16 +256,21 @@ public class Main {
 //		return layer[0][0][0];
 	}
 
-	public static double[][][] nextLayer(double[][][] layer, int layerNum, boolean isTraining, final double target){
+	public static double[][][] nextLayer(double[][][] layer, int layerNum, boolean isTraining, final double target) throws Exception{
 		int type = info[layerNum][0][0];
-		double[][][] deltaWeights;
+		//System.out.println("nextLayer "+layerNum+" type: "+type);
+		double[][][] deltaWeights = null;
 		switch(type) {
+		//input
+		case 0:
+			deltaWeights = nextLayer(layer, layerNum+1, isTraining, target);
+			return deltaWeights;
 		//convolutional
 		case 1:
 			int x = info[layerNum][1][0];
 			int y = info[layerNum][1][1];
-			
 			if(init) {
+				//System.out.println("init");
 				double[][][] weightmatrix = new double[layer.length][y][x];
 				for(int z=0;z<weightmatrix.length;z++) {
 					for(int height=0;height<y;height++) {
@@ -226,10 +280,11 @@ public class Main {
 					}
 				}
 				weights.set(layerNum, weightmatrix);
+				writeDataFile();
+				
 			}
-			
 			layer = convolutional(layer, (double[][][])weights.get(layerNum), x, y, info[layerNum][1][2], info[layerNum][1][3]);
-			if(layerNum<layer.length-1) {
+			if(layerNum<info.length-1) {
 				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
 			if(isTraining) {
@@ -238,27 +293,25 @@ public class Main {
 				}
 			}
 			return deltaWeights;
-			break;
 		//ReLU
 		case 2:
 			layer = relu(layer);
-			if(layerNum<layer.length-1) {
+			if(layerNum<info.length-1) {
 				deltaWeights = nextLayer(layer, layerNum+1, isTraining,target);
 			}
 			return deltaWeights;
-			break;
 		//Max pooling
 		case 3:
 			layer = maxpool(layer, info[layerNum][1][0], info[layerNum][1][1], info[layerNum][1][2]);
-			if(layerNum<layer.length-1) {
+			if(layerNum<info.length-1) {
 				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
 			return deltaWeights;
-			break;
 		//weighted sum
 		case 4:
 			int size = info[layerNum][1][0];
 			if(init) {
+				//System.out.println("init2");
 				double[][][][] weightmatrix = new double[size+1][layer.length][layer[0].length][layer[0][0].length];
 				for(int node = 0;node<weightmatrix.length;node++) {
 					for(int k=0;k<weightmatrix[node].length;k++) {
@@ -270,22 +323,22 @@ public class Main {
 					}
 				}
 				weights.set(layerNum, weightmatrix);
+				writeDataFile();
 			}
 			
 			layer = weightedsum(layer, (double[][][][])weights.get(layerNum), size);
-			if(layerNum<layer.length-1) {
+			if(layerNum<info.length-1) {
 				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
 			if(isTraining) {
 				backpropagation;
 			}
 			return deltaWeights;
-			break;
 		//soft max
 		case 5:
 			layer = softmax(layer);
-			if(layerNum<layer.length-1) {
-				nextLayer(layer,info,layerNum+1,isTraining,target);
+			if(layerNum<info.length-1) {
+				nextLayer(layer,layerNum+1,isTraining,target);
 			}
 			else {
 				System.out.println("Prediction ended at layer "+layerNum);
@@ -295,24 +348,24 @@ public class Main {
 				
 				if(isTraining) {
 					double delta = target - pred;
-					deltaWeights = new double[][][] = {{{delta}}};
+					double[][][] d = {{{delta}}};
+					deltaWeights = d;
 				}
 			}
 			return deltaWeights;
-			break;
 		//drop out
 		case 6:
 			if(isTraining) {
-				layer = dropout(layer, 0.3);				
+				int prob = info[layerNum][1][0];
+				double probD = (double)prob/100.0;
+				layer = dropout(layer, probD);
 			}
-			else {
-				deltaWeights = nextLayer(layer, info, layerNum+1, isTraining, target);
+			if(layerNum<info.length-1) {
+				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
 			return deltaWeights;
-			break;
 		default:
 			throw new Exception("Unknown layer type");
-			break;
 		}
 	}
 	
