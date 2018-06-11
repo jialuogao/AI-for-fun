@@ -15,6 +15,7 @@ import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.stream.Stream;
 
 import javax.imageio.ImageIO;
 //image size 640x480
@@ -30,48 +31,48 @@ public class Main {
 	private static boolean init;
 	public static void main(String[] args) throws Exception{
 		loadInfoDataFile();
-		
-		File dirin = new File(trainingPosDir);
-		int versionCount = 0;
-        for (final File f : dirin.listFiles()) {
-			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
-			BufferedImage image = ImageIO.read(inpStream);
-			boolean isCar = true;
-			train(image, isCar);
-			versionCount++;
-			if(versionCount==100) {
-				writeDataFile();
-				versionCount = 0;
-			}
-        }
-        
-        versionCount = 0;
-        dirin = new File(trainingNegDir);
-        for (final File f : dirin.listFiles()) {
-			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
-			BufferedImage image = ImageIO.read(inpStream);
-			boolean isCar = false;
-			train(image, isCar);
-			versionCount++;
-			if(versionCount==100) {
-				writeDataFile();
-				versionCount = 0;
-			}
-        }
-		
-        File testin = new File(testingPosDir);
-        for (final File f : testin.listFiles()) {
-			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
-			BufferedImage image = ImageIO.read(inpStream);
-			predict(image);
-        }
-        
-        testin = new File(testingNegDir);
-        for (final File f : testin.listFiles()) {
-			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
-			BufferedImage image = ImageIO.read(inpStream);
-			predict(image);
-        }
+		writeDataFile();
+//		File dirin = new File(trainingPosDir);
+//		int versionCount = 0;
+//        for (final File f : dirin.listFiles()) {
+//			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+//			BufferedImage image = ImageIO.read(inpStream);
+//			boolean isCar = true;
+//			train(image, isCar);
+//			versionCount++;
+//			if(versionCount==100) {
+//				writeDataFile();
+//				versionCount = 0;
+//			}
+//        }
+//        
+//        versionCount = 0;
+//        dirin = new File(trainingNegDir);
+//        for (final File f : dirin.listFiles()) {
+//			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+//			BufferedImage image = ImageIO.read(inpStream);
+//			boolean isCar = false;
+//			train(image, isCar);
+//			versionCount++;
+//			if(versionCount==100) {
+//				writeDataFile();
+//				versionCount = 0;
+//			}
+//        }
+//		
+//        File testin = new File(testingPosDir);
+//        for (final File f : testin.listFiles()) {
+//			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+//			BufferedImage image = ImageIO.read(inpStream);
+//			predict(image);
+//        }
+//        
+//        testin = new File(testingNegDir);
+//        for (final File f : testin.listFiles()) {
+//			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+//			BufferedImage image = ImageIO.read(inpStream);
+//			predict(image);
+//        }
 	}
 	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max, 6 Droop out
 	private static int[][][] info;
@@ -182,12 +183,32 @@ public class Main {
 					for(final File f: data) {
 						if(f.getName().equals(numStr)) {
 							//TODO:read in data
-							if(info[0][0][0] == 1) {
-								double[][][] weight = new double[][][];
+							BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
+							int[] detail =  Stream.of(reader.readLine().split(" ")).mapToInt(Integer::parseInt).toArray();
+							if(detail.length==3) {
+								double[][][] weight = new double[detail[0]][detail[1]][detail[2]];
+								String line;
+								int lineNum = 0;
+								while((line = reader.readLine()) != null) {
+									String[] d2 = line.split(" ");
+									for(int i=0;i<d2.length;i++) {
+										weight[lineNum][i] = Stream.of(d2[i].split(",")).mapToDouble(Double::parseDouble).toArray();
+									}
+									lineNum++;
+								}
 								weights.set(layerNum, weight); 
 							}
-							else if(info[0][0][0] == 4) {
-								double[][][][] weight = new double[][][][];
+							else if(detail.length==4) {
+								double[][][][] weight = new double[detail[0]][detail[1]][detail[2]][detail[3]];
+								for(int j =0; j<detail[0];j++) {
+									String line = reader.readLine();
+									for(int lineNum=0;lineNum<detail[1];lineNum++) {
+										String[] d2 = line.split(" ");
+										for(int i=0;i<d2.length;i++) {
+											weight[j][lineNum][i] = Stream.of(d2[i].split(",")).mapToDouble(Double::parseDouble).toArray();
+										}
+									}
+								}
 								weights.set(layerNum, weight);
 							}
 						}
@@ -288,9 +309,9 @@ public class Main {
 				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
 			if(isTraining) {
-				backpropagation{
-					change weights
-				}
+//				backpropagation{
+//					change weights
+//				}
 			}
 			return deltaWeights;
 		//ReLU
@@ -331,7 +352,7 @@ public class Main {
 				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
 			if(isTraining) {
-				backpropagation;
+//				backpropagation;
 			}
 			return deltaWeights;
 		//soft max
