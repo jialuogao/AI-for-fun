@@ -31,7 +31,6 @@ public class Main {
 	private static boolean init;
 	public static void main(String[] args) throws Exception{
 		loadInfoDataFile();
-		//writeDataFile();
 		File dirin = new File(trainingPosDir);
 		int versionCount = 0;
         for (final File f : dirin.listFiles()) {
