@@ -214,6 +214,7 @@ public class Main {
 											weight[j][lineNum][i] = Stream.of(removeNull).mapToDouble(Double::parseDouble).toArray();
 										}
 									}
+									reader.readLine();
 								}
 								weights.set(layerNum, weight);
 							}
