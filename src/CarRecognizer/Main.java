@@ -79,7 +79,6 @@ public class Main {
 	
 	private static final String infofile = "src/CarRecognizer/infoFile.txt";
 	private static final String datadir = "src/CarRecognizer/Data/";
-	private static final String datadir1 = "src/CarRecognizer/Data2/";
 	
 	public static void writeDataFile() throws Exception{
 		//System.out.println("writeDataFile");
@@ -204,14 +203,14 @@ public class Main {
 							}
 							else if(detail.length==4) {
 								double[][][][] weight = new double[detail[0]][detail[1]][detail[2]][detail[3]];
-								for(int j =0; j<detail[0];j++) {
-									String line = reader.readLine();
+								for(int block =0; block<detail[0];block++) {
 									for(int lineNum=0;lineNum<detail[1];lineNum++) {
+										String line = reader.readLine();
 										String[] d2 = Arrays.stream(line.split(", ")).filter(val->val!=null&&val.length()>0).toArray(size->new String[size]);
 										for(int i=0;i<d2.length;i++) {
 											String[] d1 = d2[i].split(",");
 											String[] removeNull = Arrays.stream(d1).filter(val -> val!=null && val.length()>0).toArray(size->new String[size]);
-											weight[j][lineNum][i] = Stream.of(removeNull).mapToDouble(Double::parseDouble).toArray();
+											weight[block][lineNum][i] = Stream.of(removeNull).mapToDouble(Double::parseDouble).toArray();
 										}
 									}
 									reader.readLine();

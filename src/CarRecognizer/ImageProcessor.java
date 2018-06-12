@@ -84,6 +84,21 @@ public class ImageProcessor {
 			System.out.println();
 		}
 	}
+	
+	public static void print2dMatrix(double[][] matrix) {
+		for(double[] y:matrix) {
+			for(double x:y) {
+				System.out.print(x+" ");
+			}
+			System.out.println();
+		}
+	}
+	public static void print3dMatrix(double[][][] matrix) {
+		for(double[][] z:matrix) {
+			print2dMatrix(z);
+			System.out.println();
+		}
+	}
 //	private static final String trainInDir = "cars_train/";
 //	private static final String trainOutDir = "cars_train_compressed/";
 //	private static final String testInDir = "cars_test/";
