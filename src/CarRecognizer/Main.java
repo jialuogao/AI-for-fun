@@ -29,7 +29,13 @@ public class Main {
 	//private static Node[][] network;
 	private static ArrayList weights = new ArrayList();
 	private static boolean init;
+	private static double learningRate;
 	public static void main(String[] args) throws Exception{
+		if(args.length!=1) {
+			System.out.println("Please input learning rate!");
+            System.exit(-1);
+		}
+		learningRate = Double.parseDouble(args[0]);
 		loadInfoDataFile();
 		File dirin = new File(trainingPosDir);
 		int versionCount = 0;
@@ -351,13 +357,36 @@ public class Main {
 				weights.set(layerNum, weightmatrix);
 				writeDataFile();
 			}
-			
-			layer = weightedsum(layer, (double[][][][])weights.get(layerNum), size);
+			double [][][][] weight = (double[][][][])weights.get(layerNum);
+			layer = weightedsum(layer, weight, size);
 			if(layerNum<info.length-1) {
 				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
+			//TODO: ???
 			if(isTraining) {
-				backpropagation;
+				double[][][] newDW = new double[layer.length][layer[0].length][layer[0][0].length];
+				for(int a=0;a<layer.length;a++) {
+					for(int b=0;b<layer[a].length;b++) {
+						for(int c=0;c<layer[a][b].length;c++) {
+							//calculate weighted delta sum
+							double weightedSum = 0;
+							for(i=0;i<weight[0].length;i++) {
+								for(j=0;j<weight[0][i].length;j++) {
+									for(int d=0;d<weight.length;d++) {
+										//TODO: ???
+										weightedSum += weight[d][a][b][c]*deltaWeights[i][j][d];										
+										//update weights
+										double delta = learningRate * layer[a][b][c] * deltaWeights[i][j][d];
+										weight[d][a][b][c] += delta;
+									}
+								}
+							}
+							weightedSum = Math.max(weightedSum, 0);
+							newDW[a][b][c] = weightedSum;
+						}
+					}
+				}
+				deltaWeights = newDW;
 			}
 			return deltaWeights;
 		//soft max
