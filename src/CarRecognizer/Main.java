@@ -314,9 +314,9 @@ public class Main {
 				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
 			if(isTraining) {
-//				backpropagation{
-//					change weights
-//				}
+				backpropagation{
+					change weights
+				}
 			}
 			return deltaWeights;
 		//ReLU
@@ -357,7 +357,7 @@ public class Main {
 				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
 			if(isTraining) {
-//				backpropagation;
+				backpropagation;
 			}
 			return deltaWeights;
 		//soft max
