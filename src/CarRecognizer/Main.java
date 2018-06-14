@@ -396,10 +396,13 @@ public class Main {
 						for(int c=0;c<newDW[a][b].length;c++) {
 							//calculate weighted delta sum
 							double weightedSum = 0;
-							for(int i=0;i<weight[0].length;i++) {
-								for(int j=0;j<weight[0][i].length;j++) {
-									for(int d=0;d<weight.length-1;d++) {
+							for(int i=0;i<deltaWeights[0].length;i++) {
+								for(int j=0;j<deltaWeights[0][i].length;j++) {
+									for(int d=0;d<deltaWeights.length-1;d++) {
 										//TODO: ???
+//										System.out.println(d+" "+layer[0][0].length);
+//										System.out.println("weight"+weight[0][0][0].length);
+//										System.out.println(deltaWeights[0][0].length);
 										weightedSum += weight[d][a][b][c]*deltaWeights[i][j][d];										
 										//update weights
 										double delta = learningRate * layer[a][b][c] * deltaWeights[i][j][d];
