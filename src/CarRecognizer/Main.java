@@ -330,8 +330,8 @@ public class Main {
 						for(int a=0;a<newDW.length;a++) {
 							double weightedSum = 0;
 							//all the backward errors, dimension for next layer/delta weights
-							for(int b=i;b<newDW[0].length-weightConv[0].length+i;b++) {
-								for(int c=j;c<newDW[0][0].length-weightConv[0][0].length+j;c++) {
+							for(int b=0;b<newDW[0].length-weightConv[0].length;b++) {
+								for(int c=0;c<newDW[0][0].length-weightConv[0][0].length;c++) {
 									//TODO: might be too big, over reacting or one directional reaction???
 									//filter error
 									weightedSum += weightConv[a][j][i]*newDW[a][b+j][c+i];
@@ -430,8 +430,8 @@ public class Main {
 			}
 			else {
 				System.out.println("Prediction ended at layer "+layerNum);
-				System.out.println("The prediction is:");
 				double pred = layer[0][0][0];
+				System.out.println("The prediction is: "+pred);
 				System.out.println(pred >= 0.5 ? "is a car":"is not a car");
 				if(init) {
 					init = false;
