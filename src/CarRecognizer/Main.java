@@ -301,9 +301,9 @@ public class Main {
 				
 			}
 			double[][][] weightConv = (double[][][])weights.get(layerNum);
-			layer = convolutional(layer, weightConv, x, y, stride, info[layerNum][1][3]);
+			double[][][] newClayer = convolutional(layer, weightConv, x, y, stride, info[layerNum][1][3]);
 			if(layerNum<info.length-1) {
-				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
+				deltaWeights = nextLayer(newClayer,layerNum+1,isTraining,target);
 			}
 			if(isTraining) {
 				double[][][] newDW = new double[layer.length][layer[0].length][layer[0][0].length];
@@ -384,16 +384,16 @@ public class Main {
 				writeDataFile();
 			}
 			double [][][][] weight = (double[][][][])weights.get(layerNum);
-			layer = weightedsum(layer, weight, size);
+			double[][][] newDW = new double[layer.length][layer[0].length][layer[0][0].length];
+			double[][][] newlayer = weightedsum(layer, weight, size);
 			if(layerNum<info.length-1) {
-				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
+				deltaWeights = nextLayer(newlayer,layerNum+1,isTraining,target);
 			}
 			//TODO: ???
 			if(isTraining) {
-				double[][][] newDW = new double[layer.length][layer[0].length][layer[0][0].length];
-				for(int a=0;a<layer.length;a++) {
-					for(int b=0;b<layer[a].length;b++) {
-						for(int c=0;c<layer[a][b].length;c++) {
+				for(int a=0;a<newDW.length;a++) {
+					for(int b=0;b<newDW[a].length;b++) {
+						for(int c=0;c<newDW[a][b].length;c++) {
 							//calculate weighted delta sum
 							double weightedSum = 0;
 							for(int i=0;i<weight[0].length;i++) {
@@ -543,7 +543,7 @@ public class Main {
 	public static double[][][] weightedsum(double[][][] layer, double[][][][] weights, int size){
 		double[][][] newLayer = new double[1][1][size+1];
 		//add bias
-		newLayer[0][0][size] = 1;
+		newLayer[0][0][size] = 1.0;
 		//dot weights for each node with layer and calculate weighted sum for each node(amount == size)
 		for(;size>0;size--) {
 			double weightedsum = 0;
