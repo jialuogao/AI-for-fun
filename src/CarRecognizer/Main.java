@@ -286,6 +286,7 @@ public class Main {
 			int x = info[layerNum][1][0];
 			int y = info[layerNum][1][1];
 			int stride = info[layerNum][1][2];
+			double ignoreRate = (double)info[layerNum][1][4]/100.0;
 			if(init) {
 				//System.out.println("init");
 				double[][][] weightmatrix = new double[layer.length][y][x];
@@ -308,17 +309,15 @@ public class Main {
 			if(isTraining) {
 				double[][][] newDW = new double[layer.length][layer[0].length][layer[0][0].length];
 				//all the forward weights, dimension for convol
-				for(int a=0;a<deltaWeights.length;a++) {
+				for(int k=0;k<deltaWeights.length;k++) {
 					for(int j=0;j<weightConv[0].length;j++) {
 						for(int i =0;i<weightConv[0][j].length;i++) {
 							//filter weight matrix * error of next layer = error of first layer
-							for(int b=0;b<deltaWeights[0].length-weightConv[0].length;b++) {
-								for(int c=0;c<deltaWeights[0][0].length-weightConv[0][0].length;c++) {
-									if(a==18) {
-										System.out.println(a);
-										
+							for(int a = 0; a<newDW.length;a++) {
+								for(int b=0;b<deltaWeights[0].length-weightConv[0].length;b++) {
+									for(int c=0;c<deltaWeights[0][0].length-weightConv[0][0].length;c++) {
+										newDW[a][b+j][c+i] += deltaWeights[k][b][c] * weightConv[a][j][i] * (generator.nextDouble()<ignoreRate ? 0.0:1.0);
 									}
-									newDW[][b+j][c+i] += deltaWeights[a][b][c] * weightConv[a][j][i];
 								}
 							}
 						}
