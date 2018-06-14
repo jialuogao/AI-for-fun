@@ -271,7 +271,7 @@ public class Main {
 		}
 		nextLayer(layer,0,isTraining,target);
 	}
-
+	//TODO: add bias to cnn
 	public static double[][][] nextLayer(double[][][] layer, int layerNum, boolean isTraining, final double target) throws Exception{
 		int type = info[layerNum][0][0];
 		//System.out.println("nextLayer "+layerNum+" type: "+type);
@@ -292,7 +292,7 @@ public class Main {
 				for(int z=0;z<weightmatrix.length;z++) {
 					for(int height=0;height<y;height++) {
 						for(int width=0;width<x;width++) {
-							weightmatrix[z][height][width]=generator.nextDouble();
+							weightmatrix[z][height][width]=(generator.nextDouble()-0.5)*2;
 						}
 					}
 				}
@@ -308,13 +308,17 @@ public class Main {
 			if(isTraining) {
 				double[][][] newDW = new double[layer.length][layer[0].length][layer[0][0].length];
 				//all the forward weights, dimension for convol
-				for(int j=0;j<weightConv[0].length;j++) {
-					for(int i =0;i<weightConv[0][j].length;i++) {
-						for(int a=0;a<deltaWeights.length;a++) {
+				for(int a=0;a<deltaWeights.length;a++) {
+					for(int j=0;j<weightConv[0].length;j++) {
+						for(int i =0;i<weightConv[0][j].length;i++) {
 							//filter weight matrix * error of next layer = error of first layer
 							for(int b=0;b<deltaWeights[0].length-weightConv[0].length;b++) {
 								for(int c=0;c<deltaWeights[0][0].length-weightConv[0][0].length;c++) {
-									newDW[a][b][c] += deltaWeights[a][b+i][c+j] * weightConv[a][j][i];
+									if(a==18) {
+										System.out.println(a);
+										
+									}
+									newDW[][b+j][c+i] += deltaWeights[a][b][c] * weightConv[a][j][i];
 								}
 							}
 						}
@@ -375,7 +379,7 @@ public class Main {
 					for(int k=0;k<weightmatrix[node].length;k++) {
 						for(int j=0;j<weightmatrix[node][k].length;j++) {
 							for(int i=0;i<weightmatrix[node][k][j].length;i++) {
-								weightmatrix[node][k][j][i]=generator.nextDouble();
+								weightmatrix[node][k][j][i]=(generator.nextDouble()-0.5)*2;
 							}
 						}
 					}
@@ -383,7 +387,7 @@ public class Main {
 				weights.set(layerNum, weightmatrix);
 				writeDataFile();
 			}
-			double [][][][] weight = (double[][][][])weights.get(layerNum);
+			double[][][][] weight = (double[][][][])weights.get(layerNum);
 			double[][][] newDW = new double[layer.length][layer[0].length][layer[0][0].length];
 			double[][][] newlayer = weightedsum(layer, weight, size);
 			if(layerNum<info.length-1) {
