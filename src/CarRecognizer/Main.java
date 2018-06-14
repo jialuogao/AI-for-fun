@@ -270,22 +270,6 @@ public class Main {
 			}
 		}
 		nextLayer(layer,0,isTraining,target);
-//		layer = convolutional(layer, new double[0][0][0], 5, 5, 3, 24, init);
-//		layer = relu(layer);
-//		layer = maxpool(layer, 3, 3, 3);
-//		layer = convolutional(layer, new double[0][0][0], 5, 5, 1, 18, init);
-//		layer = relu(layer);
-//		layer = maxpool(layer, 2, 2, 2);
-//		layer = convolutional(layer, new double[0][0][0], 3, 3, 1, 48, init);
-//		layer = relu(layer);
-//		layer = maxpool(layer, 2, 2, 2);
-//		//if training: layer = dropout(layer, 0.3);
-//		layer = weightedsum(layer, new double[0][0][0][0], 120, init);
-//		layer = weightedsum(layer, new double[0][0][0][0], 180, init);
-//		layer = weightedsum(layer, new double[0][0][0][0], 80, init);
-//		layer = weightedsum(layer, new double[0][0][0][0], 1, init);
-//		layer = softmax(layer);
-//		return layer[0][0][0];
 	}
 
 	public static double[][][] nextLayer(double[][][] layer, int layerNum, boolean isTraining, final double target) throws Exception{
@@ -301,6 +285,7 @@ public class Main {
 		case 1:
 			int x = info[layerNum][1][0];
 			int y = info[layerNum][1][1];
+			int stride = info[layerNum][1][2];
 			if(init) {
 				//System.out.println("init");
 				double[][][] weightmatrix = new double[layer.length][y][x];
@@ -315,14 +300,55 @@ public class Main {
 				writeDataFile();
 				
 			}
-			layer = convolutional(layer, (double[][][])weights.get(layerNum), x, y, info[layerNum][1][2], info[layerNum][1][3]);
+			double[][][] weightConv = (double[][][])weights.get(layerNum);
+			layer = convolutional(layer, weightConv, x, y, stride, info[layerNum][1][3]);
 			if(layerNum<info.length-1) {
 				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
 			if(isTraining) {
-				backpropagation{
-					change weights
+				double[][][] newDW = new double[layer.length][layer[0].length][layer[0][0].length];
+				//all the forward weights, dimension for convol
+				for(int j=0;j<weightConv[0].length;j++) {
+					for(int i =0;i<weightConv[0][j].length;i++) {
+						for(int a=0;a<deltaWeights.length;a++) {
+							//filter weight matrix * error of next layer = error of first layer
+							for(int b=0;b<deltaWeights[0].length-weightConv[0].length;b++) {
+								for(int c=0;c<deltaWeights[0][0].length-weightConv[0][0].length;c++) {
+									newDW[a][b][c] += deltaWeights[a][b+i][c+j] * weightConv[a][j][i];
+								}
+							}
+						}
+					}
 				}
+				
+				//use this layer errors calculate filter error sum(newDW[one block] * weight[one block])
+				for(int j=0;j<weightConv[0].length;j++) {
+					for(int i =0;i<weightConv[0][j].length;i++) {
+						for(int a=0;a<newDW.length;a++) {
+							double weightedSum = 0;
+							//all the backward errors, dimension for next layer/delta weights
+							for(int b=i;b<newDW[0].length-weightConv[0].length+i;b++) {
+								for(int c=j;c<newDW[0][0].length-weightConv[0][0].length+j;c++) {
+									//TODO: might be too big, over reacting or one directional reaction???
+									//filter error
+									weightedSum += weightConv[a][j][i]*newDW[a][b+j][c+i];
+								}
+							}
+							//use filter error to calculate weight delta = output[one block] * filter error[one block]
+							//this layer
+							double d=0;
+							for(int b=0;b<layer[0].length-weightConv[0].length;b++) {
+								for(int c=0;c<layer[0][0].length-weightConv[0][0].length;c++) {
+									d += layer[a][b+j][c+i] * weightedSum;
+								}
+							}
+							double delta = learningRate * d;
+							//update weights
+							weightConv[a][j][i] += delta;
+						}
+					}
+				}
+				deltaWeights = newDW;				
 			}
 			return deltaWeights;
 		//ReLU
@@ -370,9 +396,9 @@ public class Main {
 						for(int c=0;c<layer[a][b].length;c++) {
 							//calculate weighted delta sum
 							double weightedSum = 0;
-							for(i=0;i<weight[0].length;i++) {
-								for(j=0;j<weight[0][i].length;j++) {
-									for(int d=0;d<weight.length;d++) {
+							for(int i=0;i<weight[0].length;i++) {
+								for(int j=0;j<weight[0][i].length;j++) {
+									for(int d=0;d<weight.length-1;d++) {
 										//TODO: ???
 										weightedSum += weight[d][a][b][c]*deltaWeights[i][j][d];										
 										//update weights
@@ -381,12 +407,13 @@ public class Main {
 									}
 								}
 							}
-							weightedSum = Math.max(weightedSum, 0);
+							weightedSum = Math.max(layer[a][b][c], 0) * weightedSum;
 							newDW[a][b][c] = weightedSum;
 						}
 					}
 				}
 				deltaWeights = newDW;
+				
 			}
 			return deltaWeights;
 		//soft max
@@ -546,62 +573,3 @@ public class Main {
 	}
 	
 }
-
-	
-	
-	
-//	
-//	
-//	
-//	public static void buildNN(int[][][] NNInfo) {
-//		network = new Node[NNInfo.length][];
-//		for(int layer = NNInfo.length-1; layer>-1; layer--) {
-//			int[][] line = NNInfo[layer];
-//			int type = line[0][0];
-//			switch (type) {
-//			case 0:
-//				int nodeNum = line[2][0];
-//				//create the layer
-//				network[layer]= new Node[nodeNum];
-//				int[] connection = line[1];
-//				//create node and connect them to the network
-//				for(int con = 0; con<connection.length;con++) {
-//					//if dosen't exist, create and connect
-//					if(network[layer][0]==null) {
-//						for(int node = 0; node<nodeNum;node++) {
-//							//create current node
-//							Node currentNode = new Node();
-//							int conNum = network[con].length;
-//							//find each children from the first connection layer and add them to "children" 
-//							for(int edge = 0; edge<conNum;edge++) {
-//								Node childNode = network[con][edge];
-//								double weight = generator.nextDouble();
-//								NodeWeightWrapper child = new NodeWeightWrapper(childNode,weight);
-//								currentNode.getChildren().add(child);
-//							}
-//							network[layer][node] = currentNode;
-//						}
-//					}
-//					//connect without recreating
-//					else {
-//						for(int node = 0; node<nodeNum;node++) {
-//							Node currentNode = network[layer][node];
-//							int conNum = network[con].length;
-//							for(int edge = 0; edge<conNum;edge++) {
-//								Node childNode = network[con][edge];
-//								double weight = generator.nextDouble();
-//								NodeWeightWrapper child = new NodeWeightWrapper(childNode,weight);
-//								currentNode.getChildren().add(child);
-//							}
-//						}
-//					}
-//				}
-//				break;
-//				//{{1},{2},{5,5,3,24}},		//Convol: filter size x, y, stride, node size	213*160*24
-//			case 1:
-//				
-//			}
-//		}
-//	}
-//
-//}
