@@ -416,14 +416,18 @@ public class Main {
 //										System.out.println("weight"+weight[0][0][0].length);
 //										System.out.println(deltaWeights[0][0].length);
 //										System.out.println(weight.length);
-										weightedSum += weight[d][a][b][c]*deltaWeights[i][j][d];										
+										weightedSum += weight[d][a][b][c]*deltaWeights[i][j][d];
+//										System.out.println(deltaWeights[i][j][d]);
+//										if(Double.isNaN(weightedSum)) {
+//											System.out.println();
+//										}
 										//update weights
 										double delta = learningRate * layer[a][b][c] * deltaWeights[i][j][d];
 										weight[d][a][b][c] += delta;
 									}
 								}
 							}
-							weightedSum = (layer[a][b][c] < 0 ? 0.0:1.0) * weightedSum;
+							weightedSum = (layer[a][b][c] < 0.0 ? 0.0:1.0) * weightedSum;
 							newDW[a][b][c] = weightedSum;
 						}
 					}
