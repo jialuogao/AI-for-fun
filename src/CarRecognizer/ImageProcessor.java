@@ -39,8 +39,8 @@ public class ImageProcessor {
 			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
 			
-			int dWidth = 640;
-			int dHeight = 480;
+			int dWidth = 200;
+			int dHeight = 160;
 			double factorWidth = dWidth/image.getWidth();
 			double factorHeight = dHeight/image.getHeight();
 			image = ImageProcessor.scale(image, dWidth, dHeight, factorWidth, factorHeight);
@@ -99,17 +99,17 @@ public class ImageProcessor {
 			System.out.println();
 		}
 	}
-//	private static final String trainInDir = "cars_train/";
-//	private static final String trainOutDir = "cars_train_compressed/";
-//	private static final String testInDir = "cars_test/";
-//	private static final String testOutDir = "cars_test_compressed/";
-	private static final String trainInDir = "trees_train/";
-	private static final String trainOutDir = "trees_train_compressed/";
+	private static final String trainInDir = "cars_train/";
+	private static final String trainOutDir = "cars_train_compressed/";
+	private static final String testInDir = "cars_test/";
+	private static final String testOutDir = "cars_test_compressed/";
+//	private static final String trainInDir = "trees_train/";
+//	private static final String trainOutDir = "trees_train_compressed/";
 	
 	public static void main(String[] args) throws IOException{
 		// TODO Auto-generated method stub
 		compressImages(trainInDir,trainOutDir);
-//		compressImages(testInDir,testOutDir);
+		//compressImages(testInDir,testOutDir);
 		
 	}
 }

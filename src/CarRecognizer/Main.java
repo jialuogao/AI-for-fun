@@ -39,6 +39,9 @@ public class Main {
 		loadInfoDataFile();
 		File dirin = new File(trainingPosDir);
 		int versionCount = 0;
+		if(dirin.list().length==0) {
+			throw new Exception("new data Available");
+		}
         for (final File f : dirin.listFiles()) {
 			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
@@ -46,6 +49,7 @@ public class Main {
 			train(image, isCar);
 			versionCount++;
 			if(versionCount==100) {
+				System.out.println(versionCount);
 				writeDataFile();
 				versionCount = 0;
 			}
@@ -293,7 +297,7 @@ public class Main {
 				for(int z=0;z<weightmatrix.length;z++) {
 					for(int height=0;height<y;height++) {
 						for(int width=0;width<x;width++) {
-							weightmatrix[z][height][width]=(generator.nextDouble()-0.5)*2;
+							weightmatrix[z][height][width]=generator.nextGaussian() * 0.01;
 						}
 					}
 				}
@@ -370,6 +374,9 @@ public class Main {
 			return deltaWeights;
 		//weighted sum
 		case 4:
+			if(layerNum == 14) {
+				System.out.println();
+			}
 			int size = info[layerNum][1][0];
 			if(init) {
 				//System.out.println("init2");
@@ -378,7 +385,7 @@ public class Main {
 					for(int k=0;k<weightmatrix[node].length;k++) {
 						for(int j=0;j<weightmatrix[node][k].length;j++) {
 							for(int i=0;i<weightmatrix[node][k][j].length;i++) {
-								weightmatrix[node][k][j][i]=(generator.nextDouble()-0.5)*2;
+								weightmatrix[node][k][j][i]=generator.nextGaussian()*0.01;
 							}
 						}
 					}
@@ -419,20 +426,19 @@ public class Main {
 					}
 				}
 				deltaWeights = newDW;
-				
 			}
 			return deltaWeights;
 		//soft max
 		case 5:
 			layer = softmax(layer);
 			if(layerNum<info.length-1) {
-				nextLayer(layer,layerNum+1,isTraining,target);
+				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
 			else {
-				System.out.println("Prediction ended at layer "+layerNum);
+//				System.out.println("Prediction ended at layer "+layerNum);
 				double pred = layer[0][0][0];
-				System.out.println("The prediction is: "+pred);
-				System.out.println(pred >= 0.5 ? "is a car":"is not a car");
+//				System.out.println("The prediction is: "+pred);
+//				System.out.println(pred >= 0.5 ? "is a car":"is not a car");
 				if(init) {
 					init = false;
 				}
@@ -549,7 +555,6 @@ public class Main {
 	public static double[][][] weightedsum(double[][][] layer, double[][][][] weights, int size){
 		double[][][] newLayer = new double[1][1][size+1];
 		//add bias
-		newLayer[0][0][size] = 1.0;
 		//dot weights for each node with layer and calculate weighted sum for each node(amount == size)
 		for(;size>0;size--) {
 			double weightedsum = 0;
@@ -563,6 +568,7 @@ public class Main {
 			}
 			newLayer[0][0][size]=weightedsum;
 		}
+		newLayer[0][0][size] = 1.0;
 		return newLayer;
 	}
 	
