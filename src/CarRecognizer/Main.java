@@ -192,6 +192,7 @@ public class Main {
 					String numStr = layerNum+".txt";
 					for(final File f: data) {
 						if(f.getName().equals(numStr)) {
+							System.out.println("Reading file "+layerNum);
 							//TODO:read in data
 							BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
 							int[] detail =  Stream.of(reader.readLine().split(" ")).mapToInt(Integer::parseInt).toArray();
@@ -355,6 +356,7 @@ public class Main {
 						}
 					}
 				}
+				weights.set(layerNum,weightConv);
 				deltaWeights = newDW;				
 			}
 			return deltaWeights;
@@ -408,7 +410,7 @@ public class Main {
 							double weightedSum = 0;
 							for(int i=0;i<deltaWeights[0].length;i++) {
 								for(int j=0;j<deltaWeights[0][i].length;j++) {
-									for(int d=0;d<deltaWeights.length-1;d++) {
+									for(int d=0;d<weight.length-1;d++) {
 										//TODO: ???
 //										System.out.println(d+" "+layer[0][0].length);
 //										System.out.println("weight"+weight[0][0][0].length);
@@ -420,11 +422,12 @@ public class Main {
 									}
 								}
 							}
-							weightedSum = Math.max(layer[a][b][c], 0) * weightedSum;
+							weightedSum = (layer[a][b][c] < 0 ? 0.0:1.0) * weightedSum;
 							newDW[a][b][c] = weightedSum;
 						}
 					}
 				}
+				weights.set(layerNum,weight);
 				deltaWeights = newDW;
 			}
 			return deltaWeights;
