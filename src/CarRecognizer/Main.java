@@ -278,6 +278,7 @@ public class Main {
 	}
 	//TODO: add bias to cnn
 	public static double[][][] nextLayer(double[][][] layer, int layerNum, boolean isTraining, final double target) throws Exception{
+		checkifnan3d(layer);
 		int type = info[layerNum][0][0];
 		//System.out.println("nextLayer "+layerNum+" type: "+type);
 		double[][][] deltaWeights = null;
@@ -590,6 +591,18 @@ public class Main {
 			layer[0][0][i] = Math.exp(layer[0][0][i])/denum;
 		}
 		return layer;
+	}
+	
+	private static void checkifnan3d(double[][][]check) {
+		for(double[][]a:check) {
+			for(double[]b:a) {
+				for(double c:b) {
+					if(Double.isNaN(c)) {
+						System.out.println();
+					}
+				}
+			}
+		}
 	}
 	
 }
