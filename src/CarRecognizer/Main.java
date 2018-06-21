@@ -77,6 +77,8 @@ public class Main {
     			f = minfiles[pointermin];
     			pointermin++;        			
         	}
+        	System.out.println();
+        	System.out.println("The file name is "+f.getName()+" and it is "+(isCar? "a car":"not a car"));
 			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
 			train(image, isCar);
