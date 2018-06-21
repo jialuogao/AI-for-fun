@@ -319,7 +319,7 @@ public class Main {
 				for(int z=0;z<weightmatrix.length;z++) {
 					for(int height=0;height<y;height++) {
 						for(int width=0;width<x;width++) {
-							weightmatrix[z][height][width]=generator.nextGaussian() * 0.01;
+							weightmatrix[z][height][width]=generator.nextGaussian() * 0.0001;
 						}
 					}
 				}
@@ -405,7 +405,7 @@ public class Main {
 					for(int k=0;k<weightmatrix[node].length;k++) {
 						for(int j=0;j<weightmatrix[node][k].length;j++) {
 							for(int i=0;i<weightmatrix[node][k][j].length;i++) {
-								weightmatrix[node][k][j][i]=generator.nextGaussian()*0.01;
+								weightmatrix[node][k][j][i]=generator.nextGaussian()*0.0001;
 							}
 						}
 					}
@@ -586,16 +586,16 @@ public class Main {
 		double[][][] newLayer = new double[1][1][size+1];
 		//add bias
 		//dot weights for each node with layer and calculate weighted sum for each node(amount == size)
-		for(;size>0;size--) {
+		for(int i=0;i<size;i++) {
 			double weightedsum = 0;
 			for(int z=0;z<layer.length;z++) {
 				for(int y=0; y<layer[0].length;y++) {
 					for(int x=0;x<layer[0][0].length;x++) {
-						weightedsum += layer[z][y][x] * weights[size][z][y][x];
+						weightedsum += layer[z][y][x] * weights[i][z][y][x];
 					}
 				}
 			}
-			newLayer[0][0][size]=weightedsum;
+			newLayer[0][0][i]=weightedsum;
 		}
 		newLayer[0][0][size] = 1.0;
 		newLayer = relu(newLayer);
