@@ -30,6 +30,9 @@ public class Main {
 	private static ArrayList weights = new ArrayList();
 	private static boolean init;
 	private static double learningRate;
+	
+	private static int predCar = 0;
+	private static int predTree = 0;
 	public static void main(String[] args) throws Exception{
 		if(args.length!=1) {
 			System.out.println("Please input learning rate!");
@@ -39,70 +42,9 @@ public class Main {
 		
 		loadInfoDataFile();
 		
-		int versionCount = 0;
-		File dirin = new File(trainingPosDir);
-		File dirin2 = new File(trainingNegDir);
-		if(dirin.list().length==0 || dirin2.list().length==0) {
-			throw new Exception("no data Available");
-		}
+//		train();
 		
-		int totalpic = dirin.list().length+dirin2.list().length;
-		int maxpic = Math.max(dirin.list().length,dirin2.list().length);
-		boolean firstmax = dirin.list().length>=dirin2.list().length;
-		double ratio = (double)maxpic/(double)totalpic;
-        int pointermax = 0;
-        int pointermin = 0;
-        File[] maxfiles = firstmax ? dirin.listFiles(): dirin2.listFiles();
-        File[] minfiles = firstmax ? dirin2.listFiles(): dirin.listFiles();
-		for (int i=0;i<totalpic;i++) {
-        	File f;
-        	boolean isCar;
-        	if((generator.nextDouble()<ratio||pointermin>minfiles.length)&&!(pointermax>maxfiles.length)) {
-    			if(firstmax) {
-    				isCar = true;
-    			}
-    			else {
-    				isCar = false;
-    			}
-    			f = maxfiles[pointermax];
-    			pointermax++;        			
-        	}
-        	else {
-    			if(firstmax) {
-    				isCar = false;
-    			}
-    			else {
-    				isCar = true;
-    			}
-    			f = minfiles[pointermin];
-    			pointermin++;        			
-        	}
-        	System.out.println();
-        	System.out.println("The file name is "+f.getName()+" and it is "+(isCar? "a car":"not a car"));
-			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
-			BufferedImage image = ImageIO.read(inpStream);
-			train(image, isCar);
-			versionCount++;
-			if(versionCount==100) {
-				System.out.println(versionCount);
-				writeDataFile();
-				versionCount = 0;
-			}
-        }
-		
-        File testin = new File(testingPosDir);
-        for (final File f : testin.listFiles()) {
-			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
-			BufferedImage image = ImageIO.read(inpStream);
-			predict(image);
-        }
-        
-        testin = new File(testingNegDir);
-        for (final File f : testin.listFiles()) {
-			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
-			BufferedImage image = ImageIO.read(inpStream);
-			predict(image);
-        }
+		predict();
 	}
 	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max, 6 Droop out
 	private static int[][][] info;
@@ -255,14 +197,80 @@ public class Main {
 		}
 	}
 	
-	public static void train(BufferedImage img, boolean isCar) throws Exception {
-		//TODO: multivariable
-		final double target = isCar ? 1 : 0;
-		runNN(img, true,target);
+	public static void train() throws Exception {
+		int versionCount = 0;
+		File dirin = new File(trainingPosDir);
+		File dirin2 = new File(trainingNegDir);
+		if(dirin.list().length==0 || dirin2.list().length==0) {
+			throw new Exception("no data Available");
+		}
+		int totalpic = dirin.list().length+dirin2.list().length;
+		int maxpic = Math.max(dirin.list().length,dirin2.list().length);
+		boolean firstmax = dirin.list().length>=dirin2.list().length;
+		double ratio = (double)maxpic/(double)totalpic;
+        int pointermax = 0;
+        int pointermin = 0;
+        File[] maxfiles = firstmax ? dirin.listFiles(): dirin2.listFiles();
+        File[] minfiles = firstmax ? dirin2.listFiles(): dirin.listFiles();
+		for (int i=0;i<totalpic;i++) {
+        	File f;
+        	boolean isCar;
+        	if((generator.nextDouble()<ratio||pointermin>minfiles.length)&&!(pointermax>maxfiles.length)) {
+    			if(firstmax) {
+    				isCar = true;
+    			}
+    			else {
+    				isCar = false;
+    			}
+    			f = maxfiles[pointermax];
+    			pointermax++;        			
+        	}
+        	else {
+    			if(firstmax) {
+    				isCar = false;
+    			}
+    			else {
+    				isCar = true;
+    			}
+    			f = minfiles[pointermin];
+    			pointermin++;        			
+        	}
+        	System.out.println();
+        	System.out.println("The file name is "+f.getName()+" and it is "+(isCar? "a car":"not a car"));
+			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+			BufferedImage image = ImageIO.read(inpStream);
+			//TODO: multivariable
+			final double target = isCar ? 1 : 0;
+			runNN(image, true,target);
+			versionCount++;
+			if(versionCount==100) {
+				System.out.println(versionCount);
+				writeDataFile();
+				versionCount = 0;
+			}
+        }
+		
 	}
 	
-	public static void predict(BufferedImage img) throws Exception{
-		runNN(img, false, 0);
+	public static void predict() throws Exception{
+		predCar = 0;
+		predTree = 0;
+        File testin1 = new File(testingPosDir);
+        for (final File f : testin1.listFiles()) {
+			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+			BufferedImage image = ImageIO.read(inpStream);
+			runNN(image, false, 0);
+        }
+        File testin2 = new File(testingNegDir);
+        for (final File f : testin2.listFiles()) {
+			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+			BufferedImage image = ImageIO.read(inpStream);
+			runNN(image, false, 0);
+        }
+        System.out.println();
+        System.out.println("Prediction finished and here is the result:");
+        System.out.println((double)predCar/testin1.list().length);
+        System.out.println((double)predTree/testin2.list().length);
 	}
 	
 	public static void runNN(BufferedImage img, boolean isTraining, double target) throws Exception{
@@ -467,8 +475,9 @@ public class Main {
 					}
 				}
 				//TODO: more output node
-				System.out.println("Prediction ended at layer "+layerNum);
-				System.out.println("The prediction is: "+(pred==0 ? "is a car":"is not a car"));
+				System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
+				predCar += pred == 0 ? 1:0;
+				predTree += pred == 1 ? 1:0;
 				if(init) {
 					init = false;
 				}
