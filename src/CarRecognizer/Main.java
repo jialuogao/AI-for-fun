@@ -319,7 +319,7 @@ public class Main {
 				for(int z=0;z<weightmatrix.length;z++) {
 					for(int height=0;height<y;height++) {
 						for(int width=0;width<x;width++) {
-							weightmatrix[z][height][width]=generator.nextGaussian() * 0.0001;
+							weightmatrix[z][height][width]=generator.nextGaussian() * 0.001;
 						}
 					}
 				}
@@ -405,7 +405,7 @@ public class Main {
 					for(int k=0;k<weightmatrix[node].length;k++) {
 						for(int j=0;j<weightmatrix[node][k].length;j++) {
 							for(int i=0;i<weightmatrix[node][k][j].length;i++) {
-								weightmatrix[node][k][j][i]=generator.nextGaussian()*0.0001;
+								weightmatrix[node][k][j][i]=generator.nextGaussian()*0.001;
 							}
 						}
 					}
@@ -599,6 +599,7 @@ public class Main {
 		}
 		newLayer[0][0][size] = 1.0;
 		newLayer = relu(newLayer);
+		newLayer = normalize(newLayer);
 		return newLayer;
 	}
 	
@@ -617,6 +618,28 @@ public class Main {
 		return layer;
 	}
 	
+	public static double[][][] normalize(double[][][]layer) {
+		double total = 0;
+		int nodes = 0;
+		for(double[][]z:layer) {
+			for(double[]y:z) {
+				for(double x:y) {
+					total+=x;
+					nodes++;
+				}
+			}
+		}
+		int zl = layer.length, yl = layer[0].length, xl = layer[0][0].length;
+		double[][][] newLayer = new double[zl][yl][xl];
+		for(int z=0;z<zl;z++) {
+			for(int y=0;y<yl;y++) {
+				for(int x=0;x<xl;x++) {
+					newLayer[z][y][x] = layer[z][y][x] * (double)nodes / total;
+				}
+			}
+		}
+		return newLayer;
+	}
 	private static void checkifnan3d(double[][][]check,int layerNum) {
 		for(double[][]a:check) {
 			for(double[]b:a) {
@@ -628,5 +651,4 @@ public class Main {
 			}
 		}
 	}
-	
 }
