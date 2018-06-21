@@ -25,7 +25,7 @@ public class Main {
 	public static final String testingPosDir = "cars_test_compressed/";
 	public static final String trainingNegDir = "trees_train_compressed/";
 	public static final String testingNegDir = "trees_test_compressed/";
-	private static Random generator = new Random();
+	private static Random generator = new Random(2);
 	//private static Node[][] network;
 	private static ArrayList weights = new ArrayList();
 	private static boolean init;
@@ -52,10 +52,10 @@ public class Main {
 		double ratio = (double)maxpic/(double)totalpic;
         int pointermax = 0;
         int pointermin = 0;
+        File[] maxfiles = firstmax ? dirin.listFiles(): dirin2.listFiles();
+        File[] minfiles = firstmax ? dirin2.listFiles(): dirin.listFiles();
 		for (int i=0;i<totalpic;i++) {
         	File f;
-        	File[] maxfiles = firstmax ? dirin.listFiles(): dirin2.listFiles();
-        	File[] minfiles = firstmax ? dirin2.listFiles(): dirin.listFiles();
         	boolean isCar;
         	if((generator.nextDouble()<ratio||pointermin>minfiles.length)&&!(pointermax>maxfiles.length)) {
     			if(firstmax) {
