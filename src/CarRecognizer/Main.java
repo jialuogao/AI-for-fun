@@ -103,7 +103,7 @@ public class Main {
 						String line = "";
 						for(double[] row: plane) {
 							for(double data: row) {
-								line+=data+",";
+								line+=Math.round(data * 100000.0)/100000.0+",";
 							}
 							line+=" ";
 						}
@@ -123,7 +123,7 @@ public class Main {
 							String line = "";
 							for(double[] row: plane) {
 								for(double data: row) {
-									line+=data+",";
+									line+=Math.round(data * 100000.0)/100000.0+",";
 								}
 								line+=" ";
 							}
@@ -258,13 +258,13 @@ public class Main {
 				for(int x = 0;x<dWidth;x++) {
 					Color c = new Color(img.getRGB(x, y));
 					if(color==0) {
-						layer[color][y][x]= c.getRed();						
+						layer[color][y][x]= c.getRed()/255.0;						
 					}
 					else if(color==1) {
-						layer[color][y][x] = c.getBlue();
+						layer[color][y][x] = c.getBlue()/255.0;
 					}
 					else {
-						layer[color][y][x] = c.getGreen();
+						layer[color][y][x] = c.getGreen()/255.0;
 					}
 				}
 			}
@@ -278,7 +278,6 @@ public class Main {
 	}
 	//TODO: add bias to cnn
 	public static double[][][] nextLayer(double[][][] layer, int layerNum, boolean isTraining, final double target) throws Exception{
-		checkifnan3d(layer);
 		int type = info[layerNum][0][0];
 		//System.out.println("nextLayer "+layerNum+" type: "+type);
 		double[][][] deltaWeights = null;
@@ -377,9 +376,6 @@ public class Main {
 			return deltaWeights;
 		//weighted sum
 		case 4:
-			if(layerNum == 14) {
-				System.out.println();
-			}
 			int size = info[layerNum][1][0];
 			if(init) {
 				//System.out.println("init2");
@@ -396,6 +392,7 @@ public class Main {
 				weights.set(layerNum, weightmatrix);
 				writeDataFile();
 			}
+			
 			double[][][][] weight = (double[][][][])weights.get(layerNum);
 			double[][][] newDW = new double[layer.length][layer[0].length][layer[0][0].length];
 			double[][][] newlayer = weightedsum(layer, weight, size);
@@ -413,15 +410,7 @@ public class Main {
 								for(int j=0;j<deltaWeights[i].length;j++) {
 									for(int d=0;d<weight.length-1;d++) {
 										//TODO: ???
-//										System.out.println(d+" "+layer[0][0].length);
-//										System.out.println("weight"+weight[0][0][0].length);
-//										System.out.println(deltaWeights[0][0].length);
-//										System.out.println(weight.length);
 										weightedSum += weight[d][a][b][c]*deltaWeights[i][j][d];
-//										System.out.println(deltaWeights[i][j][d]);
-//										if(Double.isNaN(weightedSum)) {
-//											System.out.println();
-//										}
 										//update weights
 										double delta = learningRate * layer[a][b][c] * deltaWeights[i][j][d];
 										weight[d][a][b][c] += delta;
@@ -511,9 +500,7 @@ public class Main {
 		for(int plane = 0; plane<layer.length;plane++) {
 			for(int row  = 0; row<layer[plane].length;row++) {
 				for(int val = 0; val<layer[plane][row].length;val++) {
-					//System.out.println(layer[plane][row][val]);
 					layer[plane][row][val] = Math.max(layer[plane][row][val], 0);
-					//System.out.println(layer[plane][row][val]);
 				}
 			}
 		}
@@ -570,7 +557,6 @@ public class Main {
 			for(int z=0;z<layer.length;z++) {
 				for(int y=0; y<layer[0].length;y++) {
 					for(int x=0;x<layer[0][0].length;x++) {
-						//System.out.println(z+" "+y+" "+x+" "+size);
 						weightedsum += layer[z][y][x] * weights[size][z][y][x];
 					}
 				}
@@ -593,12 +579,12 @@ public class Main {
 		return layer;
 	}
 	
-	private static void checkifnan3d(double[][][]check) {
+	private static void checkifnan3d(double[][][]check,int layerNum) {
 		for(double[][]a:check) {
 			for(double[]b:a) {
 				for(double c:b) {
 					if(Double.isNaN(c)) {
-						System.out.println();
+						System.out.println(layerNum);
 					}
 				}
 			}
