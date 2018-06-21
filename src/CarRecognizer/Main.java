@@ -24,7 +24,7 @@ public class Main {
 	public static final String trainingPosDir = "cars_train_compressed/";
 	public static final String testingPosDir = "cars_test_compressed/";
 	public static final String trainingNegDir = "trees_train_compressed/";
-	public static final String testingNegDir = "trees_test_compressed/";
+	public static final String testingNegDir = "trees_train_compressed/";
 	private static Random generator = new Random(2);
 	//private static Node[][] network;
 	private static ArrayList weights = new ArrayList();
@@ -42,7 +42,7 @@ public class Main {
 		
 		loadInfoDataFile();
 		
-//		train();
+		train();
 		
 		predict();
 	}
@@ -215,7 +215,7 @@ public class Main {
 		for (int i=0;i<totalpic;i++) {
         	File f;
         	boolean isCar;
-        	if((generator.nextDouble()<ratio||pointermin>minfiles.length)&&!(pointermax>maxfiles.length)) {
+        	if((generator.nextDouble()<ratio||pointermin>=minfiles.length)&&(pointermax<maxfiles.length)) {
     			if(firstmax) {
     				isCar = true;
     			}
@@ -243,7 +243,7 @@ public class Main {
 			final double target = isCar ? 1 : 0;
 			runNN(image, true,target);
 			versionCount++;
-			if(versionCount==100) {
+			if(versionCount==500) {
 				System.out.println(versionCount);
 				writeDataFile();
 				versionCount = 0;
@@ -255,20 +255,31 @@ public class Main {
 	public static void predict() throws Exception{
 		predCar = 0;
 		predTree = 0;
+		int count = 0;
         File testin1 = new File(testingPosDir);
         for (final File f : testin1.listFiles()) {
-			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+			count++;
+			if(count%200==0) {
+				System.out.println("Current at Car: "+count);
+			}
+        	InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
 			runNN(image, false, 0);
         }
+        count = 0;
         File testin2 = new File(testingNegDir);
         for (final File f : testin2.listFiles()) {
+        	count++;
+        	if(count%200==0) {
+        		System.out.println("Current at Tree: "+count);
+        	}
 			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
 			runNN(image, false, 0);
         }
         System.out.println();
         System.out.println("Prediction finished and here is the result:");
+        System.out.println(predCar+" "+predTree+" "+testin1.list().length+" "+testin2.list().length);
         System.out.println((double)predCar/testin1.list().length);
         System.out.println((double)predTree/testin2.list().length);
 	}
@@ -451,6 +462,7 @@ public class Main {
 						}
 					}
 				}
+				weight = normalize(weight);
 				weights.set(layerNum,weight);
 				deltaWeights = newDW;
 			}
@@ -475,9 +487,10 @@ public class Main {
 					}
 				}
 				//TODO: more output node
-				System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
-				predCar += pred == 0 ? 1:0;
-				predTree += pred == 1 ? 1:0;
+				//System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
+				
+				predCar += (pred == 0 ? 1:0)*(target == 1 ? 1:0);
+				predTree += (pred == 1 ? 1:0)*(target ==0 ? 1:0);
 				if(init) {
 					init = false;
 				}
@@ -649,6 +662,34 @@ public class Main {
 		}
 		return newLayer;
 	}
+	
+	private static double[][][][] normalize(double[][][][] weight) {
+		double total = 0;
+		int nodes = 0;
+		for(double[][][]z:weight) {
+			for(double[][]y:z) {
+				for(double[] x:y) {
+					for(double w:x) {
+						total+=w;
+						nodes++;						
+					}
+				}
+			}
+		}
+		int zl = weight.length, yl = weight[0].length, xl = weight[0][0].length, wl = weight[0][0][0].length;
+		double[][][][] newWeight = new double[zl][yl][xl][wl];
+		for(int z=0;z<zl;z++) {
+			for(int y=0;y<yl;y++) {
+				for(int x=0;x<xl;x++) {
+					for(int w=0;w<wl;w++) {
+						newWeight[z][y][x][w] = weight[z][y][x][w] * (double)nodes / total;						
+					}
+				}
+			}
+		}
+		return newWeight;
+	}
+	
 	private static void checkifnan3d(double[][][]check,int layerNum) {
 		for(double[][]a:check) {
 			for(double[]b:a) {
