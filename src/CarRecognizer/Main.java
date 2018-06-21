@@ -36,34 +36,53 @@ public class Main {
             System.exit(-1);
 		}
 		learningRate = Double.parseDouble(args[0]);
+		
 		loadInfoDataFile();
-		File dirin = new File(trainingPosDir);
+		
 		int versionCount = 0;
-		if(dirin.list().length==0) {
-			throw new Exception("new data Available");
+		File dirin = new File(trainingPosDir);
+		File dirin2 = new File(trainingNegDir);
+		if(dirin.list().length==0 || dirin2.list().length==0) {
+			throw new Exception("no data Available");
 		}
-        for (final File f : dirin.listFiles()) {
+		
+		int totalpic = dirin.list().length+dirin2.list().length;
+		int maxpic = Math.max(dirin.list().length,dirin2.list().length);
+		boolean firstmax = dirin.list().length>=dirin2.list().length;
+		double ratio = (double)maxpic/(double)totalpic;
+        int pointermax = 0;
+        int pointermin = 0;
+		for (int i=0;i<totalpic;i++) {
+        	File f;
+        	File[] maxfiles = firstmax ? dirin.listFiles(): dirin2.listFiles();
+        	File[] minfiles = firstmax ? dirin2.listFiles(): dirin.listFiles();
+        	boolean isCar;
+        	if((generator.nextDouble()<ratio||pointermin>minfiles.length)&&!(pointermax>maxfiles.length)) {
+    			if(firstmax) {
+    				isCar = true;
+    			}
+    			else {
+    				isCar = false;
+    			}
+    			f = maxfiles[pointermax];
+    			pointermax++;        			
+        	}
+        	else {
+    			if(firstmax) {
+    				isCar = false;
+    			}
+    			else {
+    				isCar = true;
+    			}
+    			f = minfiles[pointermin];
+    			pointermin++;        			
+        	}
 			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
-			boolean isCar = true;
 			train(image, isCar);
 			versionCount++;
 			if(versionCount==100) {
 				System.out.println(versionCount);
-				writeDataFile();
-				versionCount = 0;
-			}
-        }
-        
-        versionCount = 0;
-        dirin = new File(trainingNegDir);
-        for (final File f : dirin.listFiles()) {
-			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
-			BufferedImage image = ImageIO.read(inpStream);
-			boolean isCar = false;
-			train(image, isCar);
-			versionCount++;
-			if(versionCount==100) {
 				writeDataFile();
 				versionCount = 0;
 			}
@@ -103,7 +122,7 @@ public class Main {
 						String line = "";
 						for(double[] row: plane) {
 							for(double data: row) {
-								line+=Math.round(data * 100000.0)/100000.0+",";
+								line+=Math.round(data * 10000000.0)/10000000.0+",";
 							}
 							line+=" ";
 						}
@@ -123,7 +142,7 @@ public class Main {
 							String line = "";
 							for(double[] row: plane) {
 								for(double data: row) {
-									line+=Math.round(data * 100000.0)/100000.0+",";
+									line+=Math.round(data * 10000000.0)/10000000.0+",";
 								}
 								line+=" ";
 							}
@@ -433,17 +452,30 @@ public class Main {
 				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
 			else {
-//				System.out.println("Prediction ended at layer "+layerNum);
-				double pred = layer[0][0][0];
-//				System.out.println("The prediction is: "+pred);
-//				System.out.println(pred >= 0.5 ? "is a car":"is not a car");
+				double max = 0;
+				int pred = -1;
+				for(double[][] a:layer) {
+					for(double[] b:a) {
+						for(int c=0;c<b.length;c++) {
+							if(b[c]>max) {
+								max = b[c];
+								pred = c;
+							}
+						}
+					}
+				}
+				//TODO: more output node
+				System.out.println("Prediction ended at layer "+layerNum);
+				System.out.println("The prediction is: "+(pred==0 ? "is a car":"is not a car"));
 				if(init) {
 					init = false;
 				}
 				if(isTraining) {
-					double delta = target - pred;
-					double[][][] d = {{{delta}}};
+					double d1 = (target==1.0 ? 1.0:0.0) - layer[0][0][0];
+					double d2 = (target==1.0 ? 0.0:1.0) - layer[0][0][1];
+					double[][][] d = {{{d1,d2}}};
 					deltaWeights = d;
+					System.out.println("The delta is: "+d1+"  "+d2);
 				}
 			}
 			return deltaWeights;
@@ -564,15 +596,19 @@ public class Main {
 			newLayer[0][0][size]=weightedsum;
 		}
 		newLayer[0][0][size] = 1.0;
+		newLayer = relu(newLayer);
 		return newLayer;
 	}
 	
-	public static double[][][] softmax(double[][][] layer){
+	public static double[][][] softmax(double[][][] layer) throws Exception{
 		double sum = 0;
 		for(double x : layer[0][0]) {
 			sum+=x;
 		}
 		double denum = Math.exp(sum);
+		if(denum-0<=0.00000001) {
+			throw new Exception("Divided by zero error!");
+		}
 		for(int i = 0; i<layer[0][0].length;i++) {
 			layer[0][0][i] = Math.exp(layer[0][0][i])/denum;
 		}
