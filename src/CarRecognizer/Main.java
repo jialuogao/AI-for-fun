@@ -25,11 +25,16 @@ public class Main {
 	public static final String testingPosDir = "cars_test_compressed/";
 	public static final String trainingNegDir = "trees_train_compressed/";
 	public static final String testingNegDir = "trees_train_compressed/";
-	private static Random generator = new Random(2);
+	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max, 6 Droop out
+	public static int[][][] info;
+	
+	public static final String infofile = "src/CarRecognizer/infoFile.txt";
+	public static final String datadir = "src/CarRecognizer/Data/";
+	private static Random generator = new Random();
 	//private static Node[][] network;
-	private static ArrayList weights = new ArrayList();
+	public static ArrayList weights = new ArrayList();
 	private static boolean init;
-	private static double learningRate;
+	public static double learningRate;
 	
 	private static int predCar = 0;
 	private static int predTree = 0;
@@ -73,11 +78,6 @@ public class Main {
         System.out.println(predCar+" first car:others "+predTree);
 		//predict();
 	}
-	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max, 6 Droop out
-	private static int[][][] info;
-	
-	private static final String infofile = "src/CarRecognizer/infoFile.txt";
-	private static final String datadir = "src/CarRecognizer/Data/";
 	
 	public static void writeDataFile(boolean isTraining) throws Exception{
 		//System.out.println("writeDataFile");
@@ -274,7 +274,7 @@ public class Main {
 			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
 			//TODO: multivariable
-			final double target = isCar ? 1 : 0;
+			final double[] target = {isCar? 1.0:0.0, isCar? 0.0:1.0};
 			learningRate = isCar ? 1:8;
 			runNN(image,isTraining,target);
 			versionCount++;
@@ -297,7 +297,8 @@ public class Main {
 			System.out.println("Current at Car: "+count);
         	InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
-			runNN(image, false, 1);
+			double[] target = {0.0, 1.0};
+			runNN(image, false, target);
         }
         count = 0;
         File testin2 = new File(testingNegDir);
@@ -306,7 +307,8 @@ public class Main {
     		System.out.println("Current at Tree: "+count);
 			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
-			runNN(image, false, 0);
+			double[] target = {0.0, 1.0};
+			runNN(image, false, target);
         }
         System.out.println();
         System.out.println("Prediction finished and here is the result:");
@@ -315,7 +317,7 @@ public class Main {
         System.out.println((double)predTree/testin2.list().length);
 	}
 	
-	public static void runNN(BufferedImage img, boolean isTraining, double target) throws Exception{
+	public static void runNN(BufferedImage img, boolean isTraining, double[] target) throws Exception{
 		//System.out.println("runNN");
 		if(info[0][0][0]!=0) {
 			throw new Exception("Info file error, did not start with an input layer");
@@ -348,7 +350,7 @@ public class Main {
 		nextLayer(layer,0,isTraining,target);
 	}
 	//TODO: add bias to cnn
-	public static double[][][] nextLayer(double[][][] layer, int layerNum, boolean isTraining, final double target) throws Exception{
+	public static double[][][] nextLayer(double[][][] layer, int layerNum, boolean isTraining, final double[] target) throws Exception{
 		int type = info[layerNum][0][0];
 		//System.out.println("nextLayer "+layerNum+" type: "+type);
 		double[][][] deltaWeights = null;
@@ -516,19 +518,21 @@ public class Main {
 					}
 				}
 				//TODO: more output node
-				System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
-				System.out.println(layer[0][0][0]+"  "+layer[0][0][1]);
-				predCar += (pred == 0 ? 1:0)*(target == 1 ? 1:0);
-				predTree += (pred == 1 ? 1:0)*(target ==0 ? 1:0);
+//				System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
+//				System.out.println(layer[0][0][0]+"  "+layer[0][0][1]);
+				predCar += (pred == 0 ? 1:0)*target[0];
+				predTree += (pred == 1 ? 1:0)*target[1];
 				if(init) {
 					init = false;
 				}
 				if(isTraining) {
-					double d1 = (target==1.0 ? 1.0:0.0) - layer[0][0][0];
-					double d2 = (target==1.0 ? 0.0:1.0) - layer[0][0][1];
-					double[][][] d = {{{d1,d2}}};
+					double[] deltas = new double[target.length];
+					for(int a=0;a<deltas.length;a++) {
+						deltas[a] = target[a] - layer[0][0][a];
+					}
+					double[][][] d = {{deltas}};
 					deltaWeights = d;
-					System.out.println("The delta is: "+d1+"  "+d2);
+//					System.out.println("The delta is: "+deltas[0]+"  "+deltas[1]);
 				}
 			}
 			return deltaWeights;
@@ -648,23 +652,21 @@ public class Main {
 			}
 			newLayer[0][0][i]=weightedsum;
 		}
+		//newLayer = normalize(newLayer);
 		newLayer[0][0][size] = 1.0;
-		newLayer = relu(newLayer);
-		newLayer = normalize(newLayer);
 		return newLayer;
 	}
 	
 	public static double[][][] softmax(double[][][] layer) throws Exception{
 		double sum = 0;
-		for(double x : layer[0][0]) {
-			sum+=x;
+		for(int x=0;x<layer[0][0].length-1;x++) {
+			sum+=Math.exp(layer[0][0][x]);
 		}
-		double denum = Math.exp(sum);
-		if(denum-0<=0.00000001) {
+		if(sum-0<=0.00000001) {
 			throw new Exception("Divided by zero error!");
 		}
-		for(int i = 0; i<layer[0][0].length;i++) {
-			layer[0][0][i] = Math.exp(layer[0][0][i])/denum;
+		for(int i = 0; i<layer[0][0].length-1;i++) {
+			layer[0][0][i] = Math.exp(layer[0][0][i])/sum;
 		}
 		return layer;
 	}
