@@ -692,15 +692,15 @@ public class Main {
 			}
 		}
 		int zl = mat.length, yl = mat[0].length, xl = mat[0][0].length;
-		double[][][] newLayer = new double[zl][yl][xl];
+		double[][][] newMat = new double[zl][yl][xl];
 		for(int z=0;z<zl;z++) {
 			for(int y=0;y<yl;y++) {
 				for(int x=0;x<xl;x++) {
-					newLayer[z][y][x] = layer[z][y][x] * (double)nodes / total;
+					newMat[z][y][x] = mat[z][y][x] * (double)nodes / total;
 				}
 			}
 		}
-		return newLayer;
+		return newMat;
 	}
 	
 	private static double[][][][] normalize(double[][][][] mat) {
@@ -717,17 +717,17 @@ public class Main {
 			}
 		}
 		int zl = mat.length, yl = mat[0].length, xl = mat[0][0].length, wl = mat[0][0][0].length;
-		double[][][][] newWeight = new double[zl][yl][xl][wl];
+		double[][][][] newMat = new double[zl][yl][xl][wl];
 		for(int z=0;z<zl;z++) {
 			for(int y=0;y<yl;y++) {
 				for(int x=0;x<xl;x++) {
 					for(int w=0;w<wl;w++) {
-						newWeight[z][y][x][w] = weight[z][y][x][w] * (double)nodes / total;						
+						newMat[z][y][x][w] = mat[z][y][x][w] * (double)nodes / total;						
 					}
 				}
 			}
 		}
-		return newWeight;
+		return newMat;
 	}
 	
 	private static void checkifnan3d(double[][][]check,int layerNum) {
