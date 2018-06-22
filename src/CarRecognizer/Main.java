@@ -42,9 +42,36 @@ public class Main {
 		
 		loadInfoDataFile();
 		
-		train();
+		//train();
+		File data = new File(trainingPosDir+"00001.jpg");
+		InputStream inpStream = new BufferedInputStream(new FileInputStream(data));
+		BufferedImage image = ImageIO.read(inpStream);
+		int versionCount = 0;
+		for(int i=0;i<2000;i++) {
+			runNN(image,true,1);
+			versionCount++;
+			if(versionCount==300) {
+				System.out.println(versionCount);
+				writeDataFile(true);
+				versionCount = 0;
+			}
+		}
 		
-		predict();
+		for(int i = 1; i<101;i++) {
+			String name="";
+			for(int x=0;x<5-(i+"").length();x++) {
+				name = "0"+name;
+			}
+			name+=i+".jpg";
+			data = new File(trainingPosDir+name);
+			inpStream = new BufferedInputStream(new FileInputStream(data));
+			image = ImageIO.read(inpStream);
+			runNN(image,false,1);
+		}
+		System.out.println();
+        System.out.println("Prediction finished and here is the result:");
+        System.out.println(predCar+" first car:others "+predTree);
+		//predict();
 	}
 	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max, 6 Droop out
 	private static int[][][] info;
@@ -52,12 +79,15 @@ public class Main {
 	private static final String infofile = "src/CarRecognizer/infoFile.txt";
 	private static final String datadir = "src/CarRecognizer/Data/";
 	
-	public static void writeDataFile() throws Exception{
+	public static void writeDataFile(boolean isTraining) throws Exception{
 		//System.out.println("writeDataFile");
 		for(int i=0;i<weights.size();i++) {
 			if(weights.get(i)!=null) {
 				if(weights.get(i).getClass().equals(new double[0][][].getClass())) {
 					double[][][] weightmatrix = (double[][][])weights.get(i);
+					if(isTraining) {
+						weightmatrix = normalize(weightmatrix);						
+					}
 					BufferedWriter writer = new BufferedWriter(new FileWriter(datadir+i+".txt"));
 					int z = weightmatrix.length, y = weightmatrix[0].length, x = weightmatrix[0][0].length;
 					writer.write(z+" "+y+" "+x);
@@ -77,6 +107,9 @@ public class Main {
 				}
 				else if(weights.get(i).getClass().equals(new double[0][][][].getClass())) {
 					double[][][][] weightmatrix = (double[][][][])weights.get(i);
+					if(isTraining) {
+						weightmatrix = normalize(weightmatrix);						
+					}
 					BufferedWriter writer = new BufferedWriter(new FileWriter(datadir+i+".txt"));
 					int z = weightmatrix.length, y = weightmatrix[0].length, x = weightmatrix[0][0].length, a = weightmatrix[0][0][0].length;
 					writer.write(z+" "+y+" "+x+" "+a);
@@ -199,6 +232,7 @@ public class Main {
 	
 	public static void train() throws Exception {
 		int versionCount = 0;
+		boolean isTraining = true;
 		File dirin = new File(trainingPosDir);
 		File dirin2 = new File(trainingNegDir);
 		if(dirin.list().length==0 || dirin2.list().length==0) {
@@ -241,11 +275,12 @@ public class Main {
 			BufferedImage image = ImageIO.read(inpStream);
 			//TODO: multivariable
 			final double target = isCar ? 1 : 0;
-			runNN(image, true,target);
+			learningRate = isCar ? 1:8;
+			runNN(image,isTraining,target);
 			versionCount++;
 			if(versionCount==500) {
 				System.out.println(versionCount);
-				writeDataFile();
+				writeDataFile(isTraining);
 				versionCount = 0;
 			}
         }
@@ -259,20 +294,16 @@ public class Main {
         File testin1 = new File(testingPosDir);
         for (final File f : testin1.listFiles()) {
 			count++;
-			if(count%200==0) {
-				System.out.println("Current at Car: "+count);
-			}
+			System.out.println("Current at Car: "+count);
         	InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
-			runNN(image, false, 0);
+			runNN(image, false, 1);
         }
         count = 0;
         File testin2 = new File(testingNegDir);
         for (final File f : testin2.listFiles()) {
         	count++;
-        	if(count%200==0) {
-        		System.out.println("Current at Tree: "+count);
-        	}
+    		System.out.println("Current at Tree: "+count);
 			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
 			runNN(image, false, 0);
@@ -338,13 +369,12 @@ public class Main {
 				for(int z=0;z<weightmatrix.length;z++) {
 					for(int height=0;height<y;height++) {
 						for(int width=0;width<x;width++) {
-							weightmatrix[z][height][width]=generator.nextGaussian() * 0.001;
+							weightmatrix[z][height][width]=generator.nextGaussian() * 0.01;
 						}
 					}
 				}
 				weights.set(layerNum, weightmatrix);
-				writeDataFile();
-				
+				writeDataFile(false);
 			}
 			double[][][] weightConv = (double[][][])weights.get(layerNum);
 			double[][][] newClayer = convolutional(layer, weightConv, x, y, stride, info[layerNum][1][3]);
@@ -424,13 +454,13 @@ public class Main {
 					for(int k=0;k<weightmatrix[node].length;k++) {
 						for(int j=0;j<weightmatrix[node][k].length;j++) {
 							for(int i=0;i<weightmatrix[node][k][j].length;i++) {
-								weightmatrix[node][k][j][i]=generator.nextGaussian()*0.001;
+								weightmatrix[node][k][j][i]=generator.nextGaussian()*0.01;
 							}
 						}
 					}
 				}
 				weights.set(layerNum, weightmatrix);
-				writeDataFile();
+				writeDataFile(false);
 			}
 			
 			double[][][][] weight = (double[][][][])weights.get(layerNum);
@@ -462,7 +492,6 @@ public class Main {
 						}
 					}
 				}
-				weight = normalize(weight);
 				weights.set(layerNum,weight);
 				deltaWeights = newDW;
 			}
@@ -478,7 +507,7 @@ public class Main {
 				int pred = -1;
 				for(double[][] a:layer) {
 					for(double[] b:a) {
-						for(int c=0;c<b.length;c++) {
+						for(int c=0;c<b.length-1;c++) {
 							if(b[c]>max) {
 								max = b[c];
 								pred = c;
@@ -487,8 +516,8 @@ public class Main {
 					}
 				}
 				//TODO: more output node
-				//System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
-				
+				System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
+				System.out.println(layer[0][0][0]+"  "+layer[0][0][1]);
 				predCar += (pred == 0 ? 1:0)*(target == 1 ? 1:0);
 				predTree += (pred == 1 ? 1:0)*(target ==0 ? 1:0);
 				if(init) {
@@ -640,18 +669,29 @@ public class Main {
 		return layer;
 	}
 	
-	public static double[][][] normalize(double[][][]layer) {
+//	public static double[][][] sigmoid(double[][][] mat){
+//		int zl = mat.length, yl = mat[0].length, xl = mat[0][0].length;
+//		double[][][] newLayer = new double[zl][yl][xl];
+//		for(int z=0;z<zl;z++) {
+//			for(int y=0;y<yl;y++) {
+//				for(int x=0;x<xl;x++) {
+//					newLayer[z][y][x] = Math.exp(mat[z][y][x]+1 * ;
+//				}
+//			}
+//		}
+//	}
+	public static double[][][] normalize(double[][][] mat) {
 		double total = 0;
 		int nodes = 0;
-		for(double[][]z:layer) {
+		for(double[][]z:mat) {
 			for(double[]y:z) {
 				for(double x:y) {
-					total+=x;
+					total+=Math.abs(x);
 					nodes++;
 				}
 			}
 		}
-		int zl = layer.length, yl = layer[0].length, xl = layer[0][0].length;
+		int zl = mat.length, yl = mat[0].length, xl = mat[0][0].length;
 		double[][][] newLayer = new double[zl][yl][xl];
 		for(int z=0;z<zl;z++) {
 			for(int y=0;y<yl;y++) {
@@ -663,20 +703,20 @@ public class Main {
 		return newLayer;
 	}
 	
-	private static double[][][][] normalize(double[][][][] weight) {
+	private static double[][][][] normalize(double[][][][] mat) {
 		double total = 0;
 		int nodes = 0;
-		for(double[][][]z:weight) {
+		for(double[][][]z:mat) {
 			for(double[][]y:z) {
 				for(double[] x:y) {
 					for(double w:x) {
-						total+=w;
+						total+=Math.abs(w);
 						nodes++;						
 					}
 				}
 			}
 		}
-		int zl = weight.length, yl = weight[0].length, xl = weight[0][0].length, wl = weight[0][0][0].length;
+		int zl = mat.length, yl = mat[0].length, xl = mat[0][0].length, wl = mat[0][0][0].length;
 		double[][][][] newWeight = new double[zl][yl][xl][wl];
 		for(int z=0;z<zl;z++) {
 			for(int y=0;y<yl;y++) {
