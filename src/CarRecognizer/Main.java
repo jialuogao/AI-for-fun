@@ -47,38 +47,9 @@ public class Main {
 		
 		loadInfoDataFile();
 		
-		//train();
-		File data = new File(trainingPosDir+"00001.jpg");
-		InputStream inpStream = new BufferedInputStream(new FileInputStream(data));
-		BufferedImage image = ImageIO.read(inpStream);
-		int versionCount = 0;
-		for(int i=0;i<1;i++) {
-			double[] target = {1.0, 0.0};
-			runNN(image,true,target);
-			versionCount++;
-			if(versionCount==1) {
-				System.out.println(versionCount);
-				writeDataFile(true);
-				versionCount = 0;
-			}
-		}
+		train();
 		
-		for(int i = 1; i<101;i++) {
-			String name="";
-			for(int x=0;x<5-(i+"").length();x++) {
-				name = "0"+name;
-			}
-			name+=i+".jpg";
-			data = new File(trainingPosDir+name);
-			inpStream = new BufferedInputStream(new FileInputStream(data));
-			image = ImageIO.read(inpStream);
-			double[] target = new double[0];
-			runNN(image,false,target);
-		}
-		System.out.println();
-        System.out.println("Prediction finished and here is the result:");
-        System.out.println(predCar+" first car:others "+predTree);
-		//predict();
+		predict();
 	}
 	
 	public static void writeDataFile(boolean isTraining) throws Exception{
@@ -299,7 +270,7 @@ public class Main {
 			System.out.println("Current at Car: "+count);
         	InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
-			double[] target = {0.0, 1.0};
+			double[] target = {1.0, 0.0};
 			runNN(image, false, target);
         }
         count = 0;
@@ -453,7 +424,7 @@ public class Main {
 			int size = info[layerNum][1][0];
 			if(init) {
 				//System.out.println("init2");
-				double[][][][] weightmatrix = new double[size+1][layer.length][layer[0].length][layer[0][0].length];
+				double[][][][] weightmatrix = new double[size][layer.length][layer[0].length][layer[0][0].length];
 				for(int node = 0;node<weightmatrix.length;node++) {
 					for(int k=0;k<weightmatrix[node].length;k++) {
 						for(int j=0;j<weightmatrix[node][k].length;j++) {
@@ -470,16 +441,8 @@ public class Main {
 			double[][][][] weight = (double[][][][])weights.get(layerNum);
 			double[][][] newDW = new double[layer.length][layer[0].length][layer[0][0].length-1];
 			double[][][] newlayer = weightedsum(layer, weight, size);
-//			for(double s:newlayer[0][0]) {
-//				System.out.print(s+" ");
-//			}
-//			System.out.println();
 			if(layerNum<info.length-1) {
 				deltaWeights = nextLayer(newlayer,layerNum+1,isTraining,target);
-//				for(double a:deltaWeights[0][0]) {
-//					System.out.print(a+" ");
-//				}
-//				System.out.println();
 			}
 			//TODO: ???
 			if(isTraining) {
@@ -489,25 +452,23 @@ public class Main {
 							//calculate weighted delta sum
 							double weightedSum = 0;
 							for(int d=0;d<weight.length;d++) {
-								//TODO: ???
-								weightedSum += weight[d][a][b][c]*deltaWeights[a][b][d];
-								//update weights
-								double delta = learningRate * layer[a][b][c] * deltaWeights[a][b][d];
-								weight[d][a][b][c] += delta;
+								for(int i=0;i<deltaWeights.length;i++) {
+									for(int j=0;j<deltaWeights.length;j++) {
+										//TODO: ???
+										weightedSum += weight[d][a][b][c]*deltaWeights[i][j][d];
+										//update weights
+										double delta = learningRate * layer[a][b][c] * deltaWeights[i][j][d];
+										weight[d][a][b][c] += delta;										
+									}
+								}
+								weightedSum = (layer[a][b][c] < 0.0000001 ? 0.0:1.0) * weightedSum;
+								if(c!=newDW[0][0].length) {
+									newDW[a][b][c] = weightedSum;								
+								}															
 							}
-							weightedSum = (layer[a][b][c] < 0.0000001 ? 0.0:1.0) * weightedSum;
-							if(c!=newDW[0][0].length) {
-								newDW[a][b][c] = weightedSum;								
-							}							
 						}
 					}
 				}
-//				for(double[][][] z: weight) {
-//					for(double v : z[0][0]) {
-//						System.out.print(v+" ");
-//					}
-//					System.out.println();
-//				}
 				weights.set(layerNum,weight);
 				deltaWeights = newDW;
 			}
@@ -515,10 +476,6 @@ public class Main {
 		//soft max
 		case 5:
 			layer = softmax(layer);
-//			for(double s:layer[0][0]) {
-//				System.out.print(s+" ");
-//			}
-//			System.out.println();
 			if(layerNum<info.length-1) {
 				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
@@ -538,8 +495,8 @@ public class Main {
 				//TODO: more output node
 //				System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
 //				System.out.println(layer[0][0][0]+"  "+layer[0][0][1]);
-				predCar += (pred == 0 ? 1:0)*target[0];
-				predTree += (pred == 1 ? 1:0)*target[1];
+					predCar += (pred == 0 ? 1:0)*target[0];
+					predTree += (pred == 1 ? 1:0)*target[1];					
 				if(init) {
 					init = false;
 				}
@@ -561,6 +518,13 @@ public class Main {
 				double probD = (double)prob/100.0;
 				layer = dropout(layer, probD);
 			}
+			if(layerNum<info.length-1) {
+				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
+			}
+			return deltaWeights;
+		//Average pooling
+		case 7:
+			layer = avgpool(layer, info[layerNum][1][0], info[layerNum][1][1], info[layerNum][1][2]);
 			if(layerNum<info.length-1) {
 				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
@@ -646,6 +610,39 @@ public class Main {
 		return newLayer;
 	}
 	
+	public static double[][][] avgpool(double[][][] layer,int x,int y,int stride){
+		// x and y in new max-pooled layer
+		int newx = (int)(Math.ceil(layer[0][0].length - x)/stride + 1);
+		int newy = (int)(Math.ceil(layer[0].length - y)/stride + 1);
+		int area = x*y;
+		//create new layer
+		double[][][] newLayer = new double[layer.length][newy][newx];
+		for(int plane = 0; plane<layer.length; plane++) {
+			for(int j=0;j<newy;j++) {
+				//calculate corresponding y value
+				int currenty = j*stride;
+				for(int i =0;i<newx;i++) {
+					//calculate corresponding x value
+					int currentx = i*stride;
+					double sum = 0;
+					//find the max(pooling)
+					for(int height = 0; height<y; height++) {
+						if(currenty+height==layer[plane].length)
+							break;
+						for(int width = 0; width<x;width++) {
+							if(currentx+width==layer[plane][currenty].length)
+								break;
+							sum+=layer[plane][currenty+height][currentx+width];
+						}
+					}
+					//save to the new layer
+					newLayer[plane][j][i]=sum/area;
+				}
+			}
+		}
+		return newLayer;
+	}
+	
 	public static double[][][] dropout(double[][][] layer, double probability){
 		for(int z = 0;z<layer.length;z++)
 			for(int y=0; y<layer[0].length;y++)
@@ -659,7 +656,7 @@ public class Main {
 		double[][][] newLayer = new double[1][1][size+1];
 		//add bias
 		//dot weights for each node with layer and calculate weighted sum for each node(amount == size)
-		for(int i=0;i<size;i++) {
+		for(int i=0;i<size-1;i++) {
 			double weightedsum = 0;
 			for(int z=0;z<layer.length;z++) {
 				for(int y=0; y<layer[0].length;y++) {
@@ -748,17 +745,5 @@ public class Main {
 			}
 		}
 		return newMat;
-	}
-	
-	private static void checkifnan3d(double[][][]check,int layerNum) {
-		for(double[][]a:check) {
-			for(double[]b:a) {
-				for(double c:b) {
-					if(Double.isNaN(c)) {
-						System.out.println(layerNum);
-					}
-				}
-			}
-		}
 	}
 }
