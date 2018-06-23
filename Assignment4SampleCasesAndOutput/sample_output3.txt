@@ -1,0 +1,23 @@
+Epoch: 0, Loss: 5.24562778e-01
+Epoch: 1, Loss: 1.44335600e-01
+Epoch: 2, Loss: 7.03556797e-02
+Epoch: 3, Loss: 4.40806819e-02
+Epoch: 4, Loss: 2.99560962e-02
+Epoch: 5, Loss: 2.28903911e-02
+Epoch: 6, Loss: 1.75826542e-02
+Epoch: 7, Loss: 1.37975451e-02
+Epoch: 8, Loss: 1.13823793e-02
+Epoch: 9, Loss: 9.60748728e-03
+Epoch: 10, Loss: 8.70459489e-03
+Epoch: 11, Loss: 7.36697037e-03
+Epoch: 12, Loss: 6.51268646e-03
+Epoch: 13, Loss: 5.89313121e-03
+Epoch: 14, Loss: 5.30293146e-03
+Epoch: 15, Loss: 4.88737255e-03
+Epoch: 16, Loss: 4.50572527e-03
+Epoch: 17, Loss: 4.26811477e-03
+Epoch: 18, Loss: 3.83911898e-03
+Epoch: 19, Loss: 3.57793568e-03
+3th instance got misclassified, expected: 6. But actual: 8
+Total instances: 105
+Correctly classified: 104
