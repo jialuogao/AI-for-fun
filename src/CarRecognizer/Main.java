@@ -52,10 +52,11 @@ public class Main {
 		InputStream inpStream = new BufferedInputStream(new FileInputStream(data));
 		BufferedImage image = ImageIO.read(inpStream);
 		int versionCount = 0;
-		for(int i=0;i<2000;i++) {
-			runNN(image,true,1);
+		for(int i=0;i<1;i++) {
+			double[] target = {1.0, 0.0};
+			runNN(image,true,target);
 			versionCount++;
-			if(versionCount==300) {
+			if(versionCount==1) {
 				System.out.println(versionCount);
 				writeDataFile(true);
 				versionCount = 0;
@@ -71,7 +72,8 @@ public class Main {
 			data = new File(trainingPosDir+name);
 			inpStream = new BufferedInputStream(new FileInputStream(data));
 			image = ImageIO.read(inpStream);
-			runNN(image,false,1);
+			double[] target = new double[0];
+			runNN(image,false,target);
 		}
 		System.out.println();
         System.out.println("Prediction finished and here is the result:");
@@ -86,7 +88,7 @@ public class Main {
 				if(weights.get(i).getClass().equals(new double[0][][].getClass())) {
 					double[][][] weightmatrix = (double[][][])weights.get(i);
 					if(isTraining) {
-						weightmatrix = normalize(weightmatrix);						
+						weightmatrix = normalize(weightmatrix);
 					}
 					BufferedWriter writer = new BufferedWriter(new FileWriter(datadir+i+".txt"));
 					int z = weightmatrix.length, y = weightmatrix[0].length, x = weightmatrix[0][0].length;
@@ -108,7 +110,7 @@ public class Main {
 				else if(weights.get(i).getClass().equals(new double[0][][][].getClass())) {
 					double[][][][] weightmatrix = (double[][][][])weights.get(i);
 					if(isTraining) {
-						weightmatrix = normalize(weightmatrix);						
+						weightmatrix = normalize(weightmatrix);
 					}
 					BufferedWriter writer = new BufferedWriter(new FileWriter(datadir+i+".txt"));
 					int z = weightmatrix.length, y = weightmatrix[0].length, x = weightmatrix[0][0].length, a = weightmatrix[0][0][0].length;
@@ -466,34 +468,46 @@ public class Main {
 			}
 			
 			double[][][][] weight = (double[][][][])weights.get(layerNum);
-			double[][][] newDW = new double[layer.length][layer[0].length][layer[0][0].length];
+			double[][][] newDW = new double[layer.length][layer[0].length][layer[0][0].length-1];
 			double[][][] newlayer = weightedsum(layer, weight, size);
+//			for(double s:newlayer[0][0]) {
+//				System.out.print(s+" ");
+//			}
+//			System.out.println();
 			if(layerNum<info.length-1) {
 				deltaWeights = nextLayer(newlayer,layerNum+1,isTraining,target);
+//				for(double a:deltaWeights[0][0]) {
+//					System.out.print(a+" ");
+//				}
+//				System.out.println();
 			}
 			//TODO: ???
 			if(isTraining) {
 				for(int a=0;a<newDW.length;a++) {
 					for(int b=0;b<newDW[a].length;b++) {
-						for(int c=0;c<newDW[a][b].length;c++) {
+						for(int c=0;c<newDW[a][b].length+1;c++) {
 							//calculate weighted delta sum
 							double weightedSum = 0;
-							for(int i=0;i<deltaWeights.length;i++) {
-								for(int j=0;j<deltaWeights[i].length;j++) {
-									for(int d=0;d<weight.length-1;d++) {
-										//TODO: ???
-										weightedSum += weight[d][a][b][c]*deltaWeights[i][j][d];
-										//update weights
-										double delta = learningRate * layer[a][b][c] * deltaWeights[i][j][d];
-										weight[d][a][b][c] += delta;
-									}
-								}
+							for(int d=0;d<weight.length;d++) {
+								//TODO: ???
+								weightedSum += weight[d][a][b][c]*deltaWeights[a][b][d];
+								//update weights
+								double delta = learningRate * layer[a][b][c] * deltaWeights[a][b][d];
+								weight[d][a][b][c] += delta;
 							}
-							weightedSum = (layer[a][b][c] < 0.0 ? 0.0:1.0) * weightedSum;
-							newDW[a][b][c] = weightedSum;
+							weightedSum = (layer[a][b][c] < 0.0000001 ? 0.0:1.0) * weightedSum;
+							if(c!=newDW[0][0].length) {
+								newDW[a][b][c] = weightedSum;								
+							}							
 						}
 					}
 				}
+//				for(double[][][] z: weight) {
+//					for(double v : z[0][0]) {
+//						System.out.print(v+" ");
+//					}
+//					System.out.println();
+//				}
 				weights.set(layerNum,weight);
 				deltaWeights = newDW;
 			}
@@ -501,6 +515,10 @@ public class Main {
 		//soft max
 		case 5:
 			layer = softmax(layer);
+//			for(double s:layer[0][0]) {
+//				System.out.print(s+" ");
+//			}
+//			System.out.println();
 			if(layerNum<info.length-1) {
 				deltaWeights = nextLayer(layer,layerNum+1,isTraining,target);
 			}
@@ -653,7 +671,7 @@ public class Main {
 			newLayer[0][0][i]=weightedsum;
 		}
 		//newLayer = normalize(newLayer);
-		newLayer[0][0][size] = 1.0;
+		newLayer[0][0][size] = 1.0;		
 		return newLayer;
 	}
 	
