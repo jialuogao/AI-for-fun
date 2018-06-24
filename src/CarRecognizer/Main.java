@@ -22,7 +22,7 @@ import javax.imageio.ImageIO;
 public class Main {
 
 	public static final String trainingPosDir = "cars_train_compressed/";
-	public static final String testingPosDir = "cars_test_compressed/";
+	public static final String testingPosDir = "cars_train_compressed/";
 	public static final String trainingNegDir = "trees_train_compressed/";
 	public static final String testingNegDir = "trees_train_compressed/";
 	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max, 6 Droop out
@@ -30,7 +30,7 @@ public class Main {
 	
 	public static final String infofile = "src/CarRecognizer/infoFile.txt";
 	public static final String datadir = "src/CarRecognizer/Data/";
-	private static Random generator = new Random();
+	private static Random generator = new Random(2);
 	//private static Node[][] network;
 	public static ArrayList weights = new ArrayList();
 	private static boolean init;
@@ -47,7 +47,7 @@ public class Main {
 		
 		loadInfoDataFile();
 		
-		train();
+		//train();
 		
 		predict();
 	}
@@ -159,7 +159,7 @@ public class Main {
 				}
 				for(int layerNum = 0; layerNum<info.length;layerNum++) {
 					String numStr = layerNum+".txt";
-					for(final File f: data) {
+					for(File f: data) {
 						if(f.getName().equals(numStr)) {
 							System.out.println("Reading file "+layerNum);
 							//TODO:read in data
@@ -247,8 +247,8 @@ public class Main {
 			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
 			//TODO: multivariable
-			final double[] target = {isCar? 1.0:0.0, isCar? 0.0:1.0};
-			learningRate = isCar ? 1:8;
+			double[] target = {isCar? 1.0:0.0, isCar? 0.0:1.0};
+			learningRate = isCar ? 0.05:0.05;
 			runNN(image,isTraining,target);
 			versionCount++;
 			if(versionCount==500) {
@@ -263,21 +263,17 @@ public class Main {
 	public static void predict() throws Exception{
 		predCar = 0;
 		predTree = 0;
-		int count = 0;
         File testin1 = new File(testingPosDir);
-        for (final File f : testin1.listFiles()) {
-			count++;
-			System.out.println("Current at Car: "+count);
+        for (File f : testin1.listFiles()) {
+			System.out.println("Current at Car: "+f.getName());
         	InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
 			double[] target = {1.0, 0.0};
 			runNN(image, false, target);
         }
-        count = 0;
         File testin2 = new File(testingNegDir);
-        for (final File f : testin2.listFiles()) {
-        	count++;
-    		System.out.println("Current at Tree: "+count);
+        for (File f : testin2.listFiles()) {
+    		System.out.println("Current at Tree: "+f.getName());
 			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
 			BufferedImage image = ImageIO.read(inpStream);
 			double[] target = {0.0, 1.0};
@@ -323,7 +319,7 @@ public class Main {
 		nextLayer(layer,0,isTraining,target);
 	}
 	//TODO: add bias to cnn
-	public static double[][][] nextLayer(double[][][] layer, int layerNum, boolean isTraining, final double[] target) throws Exception{
+	public static double[][][] nextLayer(double[][][] layer, int layerNum, boolean isTraining, double[] target) throws Exception{
 		int type = info[layerNum][0][0];
 		//System.out.println("nextLayer "+layerNum+" type: "+type);
 		double[][][] deltaWeights = null;
@@ -493,8 +489,8 @@ public class Main {
 					}
 				}
 				//TODO: more output node
-//				System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
-//				System.out.println(layer[0][0][0]+"  "+layer[0][0][1]);
+				System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
+				System.out.println(layer[0][0][0]+"  "+layer[0][0][1]);
 					predCar += (pred == 0 ? 1:0)*target[0];
 					predTree += (pred == 1 ? 1:0)*target[1];					
 				if(init) {
@@ -507,7 +503,7 @@ public class Main {
 					}
 					double[][][] d = {{deltas}};
 					deltaWeights = d;
-//					System.out.println("The delta is: "+deltas[0]+"  "+deltas[1]);
+					System.out.println("The delta is: "+deltas[0]+"  "+deltas[1]);
 				}
 			}
 			return deltaWeights;
@@ -575,6 +571,7 @@ public class Main {
 				}
 			}
 		}
+		layer = normalize(layer);
 		return layer;
 	}
 	//??
@@ -656,7 +653,7 @@ public class Main {
 		double[][][] newLayer = new double[1][1][size+1];
 		//add bias
 		//dot weights for each node with layer and calculate weighted sum for each node(amount == size)
-		for(int i=0;i<size-1;i++) {
+		for(int i=0;i<size;i++) {
 			double weightedsum = 0;
 			for(int z=0;z<layer.length;z++) {
 				for(int y=0; y<layer[0].length;y++) {
@@ -667,7 +664,6 @@ public class Main {
 			}
 			newLayer[0][0][i]=weightedsum;
 		}
-		//newLayer = normalize(newLayer);
 		newLayer[0][0][size] = 1.0;		
 		return newLayer;
 	}
@@ -700,26 +696,27 @@ public class Main {
 	public static double[][][] normalize(double[][][] mat) {
 		double total = 0;
 		int nodes = 0;
-		for(double[][]z:mat) {
-			for(double[]y:z) {
-				for(double x:y) {
-					total+=Math.abs(x);
+		int zl = mat.length, yl = mat[0].length, xl = mat[0][0].length;
+		for(int z=0;z<zl;z++) {
+			for(int y=0;y<yl;y++) {
+				for(int x=0;x<xl-1;x++) {
+					total+=Math.abs(mat[z][y][x]);
 					nodes++;
 				}
 			}
 		}
-		int zl = mat.length, yl = mat[0].length, xl = mat[0][0].length;
-		double[][][] newMat = new double[zl][yl][xl];
-		for(int z=0;z<zl;z++) {
-			for(int y=0;y<yl;y++) {
-				for(int x=0;x<xl;x++) {
-					newMat[z][y][x] = mat[z][y][x] * (double)nodes / total;
+		if(total != 0) {
+			for(int z=0;z<zl;z++) {
+				for(int y=0;y<yl;y++) {
+					for(int x=0;x<xl-1;x++) {
+						mat[z][y][x] = mat[z][y][x] * (double)nodes / total;
+					}
 				}
-			}
+			}			
 		}
-		return newMat;
+		return mat;
 	}
-	
+	//TODO
 	private static double[][][][] normalize(double[][][][] mat) {
 		double total = 0;
 		int nodes = 0;
@@ -733,17 +730,18 @@ public class Main {
 				}
 			}
 		}
-		int zl = mat.length, yl = mat[0].length, xl = mat[0][0].length, wl = mat[0][0][0].length;
-		double[][][][] newMat = new double[zl][yl][xl][wl];
-		for(int z=0;z<zl;z++) {
-			for(int y=0;y<yl;y++) {
-				for(int x=0;x<xl;x++) {
-					for(int w=0;w<wl;w++) {
-						newMat[z][y][x][w] = mat[z][y][x][w] * (double)nodes / total;						
+		if(total!=0) {
+			int zl = mat.length, yl = mat[0].length, xl = mat[0][0].length, wl = mat[0][0][0].length;
+			for(int z=0;z<zl;z++) {
+				for(int y=0;y<yl;y++) {
+					for(int x=0;x<xl;x++) {
+						for(int w=0;w<wl;w++) {
+							mat[z][y][x][w] = mat[z][y][x][w] * (double)nodes / total;						
+						}
 					}
 				}
-			}
+			}			
 		}
-		return newMat;
+		return mat;
 	}
 }
