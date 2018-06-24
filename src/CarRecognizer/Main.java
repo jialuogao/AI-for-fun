@@ -491,8 +491,10 @@ public class Main {
 				//TODO: more output node
 				System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
 				System.out.println(layer[0][0][0]+"  "+layer[0][0][1]);
+				if(!isTraining){
 					predCar += (pred == 0 ? 1:0)*target[0];
 					predTree += (pred == 1 ? 1:0)*target[1];					
+				}
 				if(init) {
 					init = false;
 				}
