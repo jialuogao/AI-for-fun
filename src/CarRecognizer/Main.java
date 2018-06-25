@@ -14,6 +14,8 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
@@ -30,7 +32,7 @@ public class Main {
 	
 	public static final String infofile = "src/CarRecognizer/infoFile.txt";
 	public static final String datadir = "src/CarRecognizer/Data/";
-	private static Random generator = new Random(2);
+	private static Random generator = new Random();
 	//private static Node[][] network;
 	public static ArrayList weights = new ArrayList();
 	private static boolean init;
@@ -47,7 +49,8 @@ public class Main {
 		
 		loadInfoDataFile();
 		
-		//train();
+		int maxEpoch = 100;
+//		train(maxEpoch);
 		
 		predict();
 	}
@@ -59,7 +62,7 @@ public class Main {
 				if(weights.get(i).getClass().equals(new double[0][][].getClass())) {
 					double[][][] weightmatrix = (double[][][])weights.get(i);
 					if(isTraining) {
-						weightmatrix = normalize(weightmatrix);
+						//weightmatrix = normalize(weightmatrix);
 					}
 					BufferedWriter writer = new BufferedWriter(new FileWriter(datadir+i+".txt"));
 					int z = weightmatrix.length, y = weightmatrix[0].length, x = weightmatrix[0][0].length;
@@ -81,7 +84,7 @@ public class Main {
 				else if(weights.get(i).getClass().equals(new double[0][][][].getClass())) {
 					double[][][][] weightmatrix = (double[][][][])weights.get(i);
 					if(isTraining) {
-						weightmatrix = normalize(weightmatrix);
+						//weightmatrix = normalize(weightmatrix);
 					}
 					BufferedWriter writer = new BufferedWriter(new FileWriter(datadir+i+".txt"));
 					int z = weightmatrix.length, y = weightmatrix[0].length, x = weightmatrix[0][0].length, a = weightmatrix[0][0][0].length;
@@ -203,7 +206,7 @@ public class Main {
 		}
 	}
 	
-	public static void train() throws Exception {
+	public static void train(int maxEpoch) throws Exception {
 		int versionCount = 0;
 		boolean isTraining = true;
 		File dirin = new File(trainingPosDir);
@@ -215,49 +218,55 @@ public class Main {
 		int maxpic = Math.max(dirin.list().length,dirin2.list().length);
 		boolean firstmax = dirin.list().length>=dirin2.list().length;
 		double ratio = (double)maxpic/(double)totalpic;
-        int pointermax = 0;
-        int pointermin = 0;
         File[] maxfiles = firstmax ? dirin.listFiles(): dirin2.listFiles();
         File[] minfiles = firstmax ? dirin2.listFiles(): dirin.listFiles();
-		for (int i=0;i<totalpic;i++) {
-        	File f;
-        	boolean isCar;
-        	if((generator.nextDouble()<ratio||pointermin>=minfiles.length)&&(pointermax<maxfiles.length)) {
-    			if(firstmax) {
-    				isCar = true;
-    			}
-    			else {
-    				isCar = false;
-    			}
-    			f = maxfiles[pointermax];
-    			pointermax++;        			
+        for(int epoch = 0; epoch<maxEpoch;epoch++) {
+        	int pointermax = 0;
+        	int pointermin = 0;
+        	List<File> maxf = Arrays.asList(maxfiles);
+        	List<File> minf = Arrays.asList(minfiles);
+        	Collections.shuffle(maxf,generator);
+        	Collections.shuffle(minf,generator);
+        	for (int i=0;i<totalpic;i++) {
+        		File f;
+        		boolean isCar;
+        		if((generator.nextDouble()<ratio||pointermin>=minfiles.length)&&(pointermax<maxfiles.length)) {
+        			if(firstmax) {
+        				isCar = true;
+        			}
+        			else {
+        				isCar = false;
+        			}
+        			f = maxf.get(pointermax);
+        			pointermax++;        			
+        		}
+        		else {
+        			if(firstmax) {
+        				isCar = false;
+        			}
+        			else {
+        				isCar = true;
+        			}
+        			f = minf.get(pointermin);
+        			pointermin++;        			
+        		}
+        		System.out.println();
+        		System.out.println("The file name is "+f.getName()+" and it is "+(isCar? "a car":"not a car"));
+        		InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
+        		BufferedImage image = ImageIO.read(inpStream);
+        		//TODO: multivariable
+        		double[] target = {isCar? 1.0:0.0, isCar? 0.0:1.0};
+        		learningRate = isCar ? 0.03:0.03;
+        		runNN(image,isTraining,target);
+        		versionCount++;
+        		if(versionCount==1000) {
+        			System.out.println(versionCount);
+        			writeDataFile(isTraining);
+        			versionCount = 0;
+        		}
         	}
-        	else {
-    			if(firstmax) {
-    				isCar = false;
-    			}
-    			else {
-    				isCar = true;
-    			}
-    			f = minfiles[pointermin];
-    			pointermin++;        			
-        	}
-        	System.out.println();
-        	System.out.println("The file name is "+f.getName()+" and it is "+(isCar? "a car":"not a car"));
-			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
-			BufferedImage image = ImageIO.read(inpStream);
-			//TODO: multivariable
-			double[] target = {isCar? 1.0:0.0, isCar? 0.0:1.0};
-			learningRate = isCar ? 0.05:0.05;
-			runNN(image,isTraining,target);
-			versionCount++;
-			if(versionCount==500) {
-				System.out.println(versionCount);
-				writeDataFile(isTraining);
-				versionCount = 0;
-			}
         }
-		
+        writeDataFile(isTraining);
 	}
 	
 	public static void predict() throws Exception{
@@ -457,7 +466,8 @@ public class Main {
 										weight[d][a][b][c] += delta;										
 									}
 								}
-								weightedSum = (layer[a][b][c] < 0.0000001 ? 0.0:1.0) * weightedSum;
+								//"Leaky" ReLUs used for avoiding dying ReLU
+								weightedSum = (layer[a][b][c] < 0.0000001 ? 0.1:1.0) * weightedSum;
 								if(c!=newDW[0][0].length) {
 									newDW[a][b][c] = weightedSum;								
 								}															
@@ -711,7 +721,7 @@ public class Main {
 			for(int z=0;z<zl;z++) {
 				for(int y=0;y<yl;y++) {
 					for(int x=0;x<xl-1;x++) {
-						mat[z][y][x] = mat[z][y][x] * (double)nodes / total;
+						mat[z][y][x] = mat[z][y][x] / total;
 					}
 				}
 			}			
