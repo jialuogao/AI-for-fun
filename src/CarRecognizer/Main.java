@@ -50,7 +50,7 @@ public class Main {
 		loadInfoDataFile();
 		
 		int maxEpoch = 100;
-//		train(maxEpoch);
+		train(maxEpoch);
 		
 		predict();
 	}
@@ -256,7 +256,7 @@ public class Main {
         		BufferedImage image = ImageIO.read(inpStream);
         		//TODO: multivariable
         		double[] target = {isCar? 1.0:0.0, isCar? 0.0:1.0};
-        		learningRate = isCar ? 0.03:0.03;
+        		learningRate = isCar ? 0.05:0.05;
         		runNN(image,isTraining,target);
         		versionCount++;
         		if(versionCount==1000) {
@@ -467,7 +467,7 @@ public class Main {
 									}
 								}
 								//"Leaky" ReLUs used for avoiding dying ReLU
-								weightedSum = (layer[a][b][c] < 0.0000001 ? 0.1:1.0) * weightedSum;
+								weightedSum = (layer[a][b][c] < 0.0000001 ? 0.05:1.0) * weightedSum;
 								if(c!=newDW[0][0].length) {
 									newDW[a][b][c] = weightedSum;								
 								}															
@@ -579,7 +579,7 @@ public class Main {
 		for(int plane = 0; plane<layer.length;plane++) {
 			for(int row  = 0; row<layer[plane].length;row++) {
 				for(int val = 0; val<layer[plane][row].length;val++) {
-					layer[plane][row][val] = Math.max(layer[plane][row][val], 0);
+					layer[plane][row][val] = Math.max(layer[plane][row][val], 0.01);
 				}
 			}
 		}
@@ -677,6 +677,7 @@ public class Main {
 			newLayer[0][0][i]=weightedsum;
 		}
 		newLayer[0][0][size] = 1.0;		
+		newLayer = relu(newLayer);
 		return newLayer;
 	}
 	
