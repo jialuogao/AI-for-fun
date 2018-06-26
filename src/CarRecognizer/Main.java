@@ -250,8 +250,8 @@ public class Main {
         			f = minf.get(pointermin);
         			pointermin++;        			
         		}
-        		System.out.println();
-        		System.out.println("The file name is "+f.getName()+" and it is "+(isCar? "a car":"not a car"));
+//        		System.out.println();
+//        		System.out.println("The file name is "+f.getName()+" and it is "+(isCar? "a car":"not a car"));
         		InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
         		BufferedImage image = ImageIO.read(inpStream);
         		//TODO: multivariable
@@ -499,7 +499,7 @@ public class Main {
 					}
 				}
 				//TODO: more output node
-				System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
+//				System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
 				System.out.println(layer[0][0][0]+"  "+layer[0][0][1]);
 				if(!isTraining){
 					predCar += (pred == 0 ? 1:0)*target[0];
@@ -515,7 +515,7 @@ public class Main {
 					}
 					double[][][] d = {{deltas}};
 					deltaWeights = d;
-					System.out.println("The delta is: "+deltas[0]+"  "+deltas[1]);
+//					System.out.println("The delta is: "+deltas[0]+"  "+deltas[1]);
 				}
 			}
 			return deltaWeights;
@@ -579,11 +579,11 @@ public class Main {
 		for(int plane = 0; plane<layer.length;plane++) {
 			for(int row  = 0; row<layer[plane].length;row++) {
 				for(int val = 0; val<layer[plane][row].length;val++) {
-					layer[plane][row][val] = Math.max(layer[plane][row][val], 0.01);
+					layer[plane][row][val] = Math.max(layer[plane][row][val], 0.0);
 				}
 			}
 		}
-		layer = normalize(layer);
+		//layer = normalize(layer);
 		return layer;
 	}
 	//??
@@ -655,7 +655,7 @@ public class Main {
 	public static double[][][] dropout(double[][][] layer, double probability){
 		for(int z = 0;z<layer.length;z++)
 			for(int y=0; y<layer[0].length;y++)
-				for(int x=0;x<layer[0][0].length;x++)
+				for(int x=0;x<layer[0][0].length-1;x++)
 					if(generator.nextDouble()<probability)
 						layer[z][y][x] = 0;
 		return layer;
@@ -676,7 +676,7 @@ public class Main {
 			}
 			newLayer[0][0][i]=weightedsum;
 		}
-		newLayer[0][0][size] = 1.0;		
+		newLayer[0][0][size] = 1.0;
 		newLayer = relu(newLayer);
 		return newLayer;
 	}
