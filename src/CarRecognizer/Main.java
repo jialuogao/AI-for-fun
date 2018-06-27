@@ -40,30 +40,32 @@ public class Main {
 	
 	private static int predCar = 0;
 	private static int predTree = 0;
+	
+	public static final String imageDir = "input.jpg";
 	public static void main(String[] args) throws Exception{
-		if(args.length!=1) {
-			System.out.println("Please input learning rate!");
-            System.exit(-1);
-		}
-		learningRate = Double.parseDouble(args[0]);
 		
 		loadInfoDataFile();
 		
-		int versionCount=0;
-		for(;versionCount<7;versionCount++) {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(datadir+"result.txt",true));
-			int maxEpoch = 5;
-			///
-			train(maxEpoch);
-			///
-			predict();
-			writer.write("Version: "+versionCount+" with max epoch of: "+maxEpoch+" result: Car: "+predCar+" Tree: "+predTree);
-			writer.newLine();
-	        writer.write("Accuracy: Car: "+((double)predCar/8041)+" Tree: "+((double)predTree/1181));
-	        writer.newLine();
-	        writer.newLine();
-	        writer.close();
-		}
+		predict(imageDir);
+		
+		learningRate = 0.01;
+
+		/// Testing for the best accuracy
+//		int versionCount=0;
+//		for(;versionCount<7;versionCount++) {
+//			BufferedWriter writer = new BufferedWriter(new FileWriter(datadir+"result.txt",true));
+//			int maxEpoch = 5;
+//			///
+//			train(maxEpoch);
+//			///
+//			predictAll();
+//			writer.write("Version: "+versionCount+" with max epoch of: "+maxEpoch+" result: Car: "+predCar+" Tree: "+predTree);
+//			writer.newLine();
+//	        writer.write("Accuracy: Car: "+((double)predCar/8041)+" Tree: "+((double)predTree/1181));
+//	        writer.newLine();
+//	        writer.newLine();
+//	        writer.close();
+//		}
 	}
 	
 	public static void writeDataFile(boolean isTraining) throws Exception{
@@ -267,7 +269,6 @@ public class Main {
         		BufferedImage image = ImageIO.read(inpStream);
         		//TODO: multivariable
         		double[] target = {isCar? 1.0:0.0, isCar? 0.0:1.0};
-        		learningRate = isCar ? 0.01:0.01;
         		runNN(image,isTraining,target);
 //        		versionCount++;
 //        		if(versionCount==1000) {
@@ -280,7 +281,15 @@ public class Main {
         writeDataFile(isTraining);
 	}
 	
-	public static void predict() throws Exception{
+	public static void predict(String testingDir) throws Exception{
+		File test = new File(testingDir);
+    	InputStream inpStream = new BufferedInputStream(new FileInputStream(test));
+		BufferedImage image = ImageIO.read(inpStream);
+		double[] target = {0.0, 0.0};
+		runNN(image, false, target);
+    }
+	
+	public static void predictAll() throws Exception{
 		predCar = 0;
 		predTree = 0;
         File testin1 = new File(testingPosDir);
@@ -513,7 +522,7 @@ public class Main {
 					}
 				}
 				//TODO: more output node
-//				System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
+				System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
 				System.out.println(layer[0][0][0]+"  "+layer[0][0][1]);
 				if(!isTraining){
 					predCar += (pred == 0 ? 1:0)*target[0];
