@@ -335,7 +335,7 @@ public class Main {
 		switch(type) {
 		//input
 		case 0:
-			layer = straighten(layer);
+			//layer = straighten(layer);
 			deltaWeights = nextLayer(layer, layerNum+1, isTraining, target);
 			return deltaWeights;
 		//convolutional
@@ -464,6 +464,9 @@ public class Main {
 									for(int d=0;d<weight.length;d++) {
 										//TODO: ???
 										weightedSum += weight[d][a][b][c]*deltaWeights[i][j][d];
+										//update weights
+										double delta = learningRate * layer[a][b][c] * deltaWeights[i][j][d];
+										weight[d][a][b][c] += delta;										
 									}
 								}
 							}
@@ -472,24 +475,6 @@ public class Main {
 							if(c!=newDW[0][0].length) {
 								newDW[a][b][c] = weightedSum;								
 							}															
-						}
-					}
-				}
-				for(int i=0;i<deltaWeights.length;i++) {
-					for(int j=0;j<deltaWeights.length;j++) {
-						for(int d=0;d<weight.length;d++) {
-							//calculate weighted delta sum
-							double weightedSum = 0;
-							for(int a=0;a<newDW.length;a++) {
-								for(int b=0;b<newDW[a].length;b++) {
-									for(int c=0;c<newDW[a][b].length+1;c++) {
-										//TODO: ???
-										//update weights
-										double delta = learningRate * layer[a][b][c] * deltaWeights[i][j][d];
-										weight[d][a][b][c] += delta;										
-									}
-								}
-							}
 						}
 					}
 				}
@@ -531,6 +516,7 @@ public class Main {
 					for(int a=0;a<deltas.length;a++) {
 						deltas[a] = target[a] - layer[0][0][a];
 						if(Double.isNaN(deltas[a])) {
+							System.out.println("NaN error, program exited");
 							System.exit(0);
 						}
 					}
