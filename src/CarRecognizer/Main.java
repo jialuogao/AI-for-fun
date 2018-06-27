@@ -24,7 +24,7 @@ import javax.imageio.ImageIO;
 public class Main {
 
 	public static final String trainingPosDir = "cars_train_compressed/";
-	public static final String testingPosDir = "cars_train_compressed/";
+	public static final String testingPosDir = "cars_test_compressed/";
 	public static final String trainingNegDir = "trees_train_compressed/";
 	public static final String testingNegDir = "trees_train_compressed/";
 	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max, 6 Droop out
