@@ -30,7 +30,7 @@ public class Main {
 	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max, 6 Droop out
 	public static int[][][] info;
 	
-	public static final String infofile = "src/CarRecognizer/infoFile.txt";
+	public static final String infofile = "src/CarRecognizer/Data/infoFile.txt";
 	public static final String datadir = "src/CarRecognizer/Data/";
 	private static Random generator = new Random();
 	//private static Node[][] network;
@@ -50,7 +50,7 @@ public class Main {
 		loadInfoDataFile();
 		
 		int maxEpoch = 100;
-		train(maxEpoch);
+//		train(maxEpoch);
 		
 		predict();
 	}
@@ -150,7 +150,7 @@ public class Main {
 		else {
 			//no file exist, initiate weights
 			File[] data = dataFile.listFiles();
-			if(data.length==0) {
+			if(data.length<2) {
 				init = true;
 			}
 			else {
