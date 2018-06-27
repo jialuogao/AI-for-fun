@@ -50,7 +50,7 @@ public class Main {
 		loadInfoDataFile();
 		
 		int maxEpoch = 100;
-//		train(maxEpoch);
+		train(maxEpoch);
 		
 		predict();
 	}
@@ -601,7 +601,6 @@ public class Main {
 				}
 			}
 		}
-		//layer = normalize(layer);
 		return layer;
 	}
 	//??
