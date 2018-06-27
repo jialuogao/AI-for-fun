@@ -1,0 +1,21 @@
+Version: 0 with max epoch of: 5 result: Car: 0 Tree: 1181
+Accuracy: Car: 0.0 Tree: 1.0
+
+Version: 1 with max epoch of: 5 result: Car: 0 Tree: 1181
+Accuracy: Car: 0.0 Tree: 1.0
+
+Version: 2 with max epoch of: 5 result: Car: 4283 Tree: 1172
+Accuracy: Car: 0.5326451933839075 Tree: 0.9923793395427604
+
+Version: 3 with max epoch of: 5 result: Car: 7032 Tree: 1129
+Accuracy: Car: 0.8745180947643328 Tree: 0.955969517358171
+
+Version: 4 with max epoch of: 5 result: Car: 7992 Tree: 699
+Accuracy: Car: 0.9939062305683373 Tree: 0.5918712955122777
+
+Version: 5 with max epoch of: 5 result: Car: 5951 Tree: 1181
+Accuracy: Car: 0.7400820793433652 Tree: 1.0
+
+Version: 6 with max epoch of: 5 result: Car: 7625 Tree: 1140
+Accuracy: Car: 0.9482651411515981 Tree: 0.9652836579170194
+

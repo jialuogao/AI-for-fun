@@ -50,7 +50,7 @@ public class Main {
 		loadInfoDataFile();
 		
 		int versionCount=0;
-		for(;versionCount<100;versionCount++) {
+		for(;versionCount<7;versionCount++) {
 			BufferedWriter writer = new BufferedWriter(new FileWriter(datadir+"result.txt",true));
 			int maxEpoch = 5;
 			///

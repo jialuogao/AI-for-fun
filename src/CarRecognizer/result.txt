@@ -1,0 +1,39 @@
+Version: 0 with max epoch of: 5 result: Car: 0 Tree: 1181
+Accuracy: Car: 0.0 Tree: 1.0
+
+Version: 1 with max epoch of: 5 result: Car: 8041 Tree: 0
+Accuracy: Car: 1.0 Tree: 0.0
+
+Version: 2 with max epoch of: 5 result: Car: 8021 Tree: 71
+Accuracy: Car: 0.9975127471707499 Tree: 0.060118543607112614
+
+Version: 3 with max epoch of: 5 result: Car: 2845 Tree: 1179
+Accuracy: Car: 0.35381171496082575 Tree: 0.9983065198983911
+
+Version: 4 with max epoch of: 5 result: Car: 8012 Tree: 226
+Accuracy: Car: 0.9963934833975874 Tree: 0.1913632514817951
+
+Version: 5 with max epoch of: 5 result: Car: 6708 Tree: 1169
+Accuracy: Car: 0.8342245989304813 Tree: 0.9898391193903472
+
+Version: 6 with max epoch of: 5 result: Car: 7800 Tree: 1089
+Accuracy: Car: 0.9700286034075364 Tree: 0.9220999153259949
+
+Version: 0 with max epoch of: 5 result: Car: 7679 Tree: 1116
+Accuracy: Car: 0.9549807237905733 Tree: 0.9449618966977138
+
+Version: 1 with max epoch of: 5 result: Car: 7297 Tree: 1176
+Accuracy: Car: 0.9074741947518965 Tree: 0.995766299745978
+
+Version: 2 with max epoch of: 5 result: Car: 7548 Tree: 1177
+Accuracy: Car: 0.9386892177589852 Tree: 0.9966130397967824
+
+Version: 3 with max epoch of: 5 result: Car: 7540 Tree: 1181
+Accuracy: Car: 0.9376943166272852 Tree: 1.0
+
+Version: 4 with max epoch of: 5 result: Car: 7599 Tree: 1176
+Accuracy: Car: 0.945031712473573 Tree: 0.995766299745978
+
+Version: 5 with max epoch of: 5 result: Car: 7616 Tree: 1180
+Accuracy: Car: 0.9471458773784355 Tree: 0.9991532599491956
+
