@@ -335,6 +335,7 @@ public class Main {
 		switch(type) {
 		//input
 		case 0:
+			layer = straighten(layer);
 			deltaWeights = nextLayer(layer, layerNum+1, isTraining, target);
 			return deltaWeights;
 		//convolutional
@@ -451,26 +452,43 @@ public class Main {
 			}
 			//TODO: ???
 			if(isTraining) {
+				// newDW ~~ weight[i] ~~ layer
+				// newlayer ~~ deltaWeights
 				for(int a=0;a<newDW.length;a++) {
 					for(int b=0;b<newDW[a].length;b++) {
 						for(int c=0;c<newDW[a][b].length+1;c++) {
 							//calculate weighted delta sum
 							double weightedSum = 0;
-							for(int d=0;d<weight.length;d++) {
-								for(int i=0;i<deltaWeights.length;i++) {
-									for(int j=0;j<deltaWeights.length;j++) {
+							for(int i=0;i<deltaWeights.length;i++) {
+								for(int j=0;j<deltaWeights.length;j++) {
+									for(int d=0;d<weight.length;d++) {
 										//TODO: ???
 										weightedSum += weight[d][a][b][c]*deltaWeights[i][j][d];
+									}
+								}
+							}
+							//"Leaky" ReLUs used for avoiding dying ReLU
+							weightedSum = (layer[a][b][c] < 0.0000001 ? 0.05:1.0) * weightedSum;
+							if(c!=newDW[0][0].length) {
+								newDW[a][b][c] = weightedSum;								
+							}															
+						}
+					}
+				}
+				for(int i=0;i<deltaWeights.length;i++) {
+					for(int j=0;j<deltaWeights.length;j++) {
+						for(int d=0;d<weight.length;d++) {
+							//calculate weighted delta sum
+							double weightedSum = 0;
+							for(int a=0;a<newDW.length;a++) {
+								for(int b=0;b<newDW[a].length;b++) {
+									for(int c=0;c<newDW[a][b].length+1;c++) {
+										//TODO: ???
 										//update weights
 										double delta = learningRate * layer[a][b][c] * deltaWeights[i][j][d];
 										weight[d][a][b][c] += delta;										
 									}
 								}
-								//"Leaky" ReLUs used for avoiding dying ReLU
-								weightedSum = (layer[a][b][c] < 0.0000001 ? 0.05:1.0) * weightedSum;
-								if(c!=newDW[0][0].length) {
-									newDW[a][b][c] = weightedSum;								
-								}															
 							}
 						}
 					}
@@ -579,7 +597,7 @@ public class Main {
 		for(int plane = 0; plane<layer.length;plane++) {
 			for(int row  = 0; row<layer[plane].length;row++) {
 				for(int val = 0; val<layer[plane][row].length;val++) {
-					layer[plane][row][val] = Math.max(layer[plane][row][val], 0.0);
+					layer[plane][row][val] = Math.max(layer[plane][row][val], 0.05*layer[plane][row][val]);
 				}
 			}
 		}
@@ -652,6 +670,20 @@ public class Main {
 		return newLayer;
 	}
 	
+	public static double[][][] straighten(double[][][] layer){
+		int total = layer.length * layer[0].length * layer[0][0].length;
+		double[][][] newLayer = new double[1][1][total];
+		int i = 0;
+		for(double[][] z:layer) {
+			for(double[] y:z) {
+				for(double x:y) {
+					newLayer[0][0][i] = x;
+					i++;
+				}
+			}
+		}
+		return newLayer;
+	}
 	public static double[][][] dropout(double[][][] layer, double probability){
 		for(int z = 0;z<layer.length;z++)
 			for(int y=0; y<layer[0].length;y++)
@@ -663,7 +695,6 @@ public class Main {
 	//??
 	public static double[][][] weightedsum(double[][][] layer, double[][][][] weights, int size){
 		double[][][] newLayer = new double[1][1][size+1];
-		//add bias
 		//dot weights for each node with layer and calculate weighted sum for each node(amount == size)
 		for(int i=0;i<size;i++) {
 			double weightedsum = 0;
@@ -676,6 +707,7 @@ public class Main {
 			}
 			newLayer[0][0][i]=weightedsum;
 		}
+		//add bias
 		newLayer[0][0][size] = 1.0;
 		newLayer = relu(newLayer);
 		return newLayer;
@@ -686,7 +718,7 @@ public class Main {
 		for(int x=0;x<layer[0][0].length-1;x++) {
 			sum+=Math.exp(layer[0][0][x]);
 		}
-		if(sum-0<=0.00000001) {
+		if(sum<0.00000001) {
 			throw new Exception("Divided by zero error!");
 		}
 		for(int i = 0; i<layer[0][0].length-1;i++) {

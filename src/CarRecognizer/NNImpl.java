@@ -87,9 +87,7 @@ public class NNImpl {
        
         	Main.weights.add(null);
     		Main.weights.add(weights);
-    		Main.weights.add(null);
     		Main.weights.add(weights2);
-    		Main.weights.add(null);
     }
 
     /**
@@ -176,8 +174,6 @@ public class NNImpl {
     	layer[0][0][layer[0][0].length-1] = 1.0;
     	
     	layer = Main.weightedsum(layer, (double[][][][])Main.weights.get(1), weights.length);
-    	layer = Main.relu(layer);
-    	layer = Main.weightedsum(layer, (double[][][][])Main.weights.get(3), weights2.length);
-    	layer = Main.softmax(layer);
+    	layer = Main.weightedsum(layer, (double[][][][])Main.weights.get(2), weights2.length);
     }
 }
