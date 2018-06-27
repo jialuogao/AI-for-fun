@@ -530,6 +530,9 @@ public class Main {
 					double[] deltas = new double[target.length];
 					for(int a=0;a<deltas.length;a++) {
 						deltas[a] = target[a] - layer[0][0][a];
+						if(Double.isNaN(deltas[a])) {
+							System.exit(0);
+						}
 					}
 					double[][][] d = {{deltas}};
 					deltaWeights = d;
