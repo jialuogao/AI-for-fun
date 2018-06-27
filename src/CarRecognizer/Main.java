@@ -72,7 +72,7 @@ public class Main {
 						String line = "";
 						for(double[] row: plane) {
 							for(double data: row) {
-								line+=Math.round(data * 10000000.0)/10000000.0+",";
+								line+=data+",";
 							}
 							line+=" ";
 						}
