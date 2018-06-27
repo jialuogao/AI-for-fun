@@ -49,10 +49,21 @@ public class Main {
 		
 		loadInfoDataFile();
 		
-		int maxEpoch = 100;
-		train(maxEpoch);
-		
-		predict();
+		int versionCount=0;
+		for(;versionCount<100;versionCount++) {
+			BufferedWriter writer = new BufferedWriter(new FileWriter(datadir+"result.txt",true));
+			int maxEpoch = 5;
+			///
+			train(maxEpoch);
+			///
+			predict();
+			writer.write("Version: "+versionCount+" with max epoch of: "+maxEpoch+" result: Car: "+predCar+" Tree: "+predTree);
+			writer.newLine();
+	        writer.write("Accuracy: Car: "+((double)predCar/8041)+" Tree: "+((double)predTree/1181));
+	        writer.newLine();
+	        writer.newLine();
+	        writer.close();
+		}
 	}
 	
 	public static void writeDataFile(boolean isTraining) throws Exception{
@@ -95,7 +106,7 @@ public class Main {
 							String line = "";
 							for(double[] row: plane) {
 								for(double data: row) {
-									line+=Math.round(data * 10000000.0)/10000000.0+",";
+									line+=data+",";
 								}
 								line+=" ";
 							}
@@ -258,12 +269,12 @@ public class Main {
         		double[] target = {isCar? 1.0:0.0, isCar? 0.0:1.0};
         		learningRate = isCar ? 0.01:0.01;
         		runNN(image,isTraining,target);
-        		versionCount++;
-        		if(versionCount==1000) {
-        			System.out.println(versionCount);
-        			writeDataFile(isTraining);
-        			versionCount = 0;
-        		}
+//        		versionCount++;
+//        		if(versionCount==1000) {
+//        			System.out.println(versionCount);
+//        			writeDataFile(isTraining);
+//        			versionCount = 0;
+//        		}
         	}
         }
         writeDataFile(isTraining);
