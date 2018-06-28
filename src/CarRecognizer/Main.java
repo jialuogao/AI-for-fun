@@ -285,6 +285,7 @@ public class Main {
 		File test = new File(testingDir);
     	InputStream inpStream = new BufferedInputStream(new FileInputStream(test));
 		BufferedImage image = ImageIO.read(inpStream);
+		image = ImageProcessor.scale(image, 50, 40);
 		double[] target = {0.0, 0.0};
 		runNN(image, false, target);
     }

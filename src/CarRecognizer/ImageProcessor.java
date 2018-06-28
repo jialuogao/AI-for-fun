@@ -22,15 +22,15 @@ public class ImageProcessor {
 	 * @param factorHeight y-factor for transformation / scaling
 	 * @return scaled image
 	 */
-	public static BufferedImage scale(BufferedImage sbi, int dWidth, int dHeight, double factorWidth, double factorHeight) {
-	    BufferedImage dbi = null;
-	    if(sbi != null) {
-	        dbi = new BufferedImage(dWidth, dHeight, BufferedImage.TYPE_INT_RGB);
-	        Graphics2D g = dbi.createGraphics();
-	        g.drawImage(sbi, 0, 0, dWidth, dHeight, null);
+	public static BufferedImage scale(BufferedImage image, int dWidth, int dHeight) {
+	    BufferedImage newImg = null;
+	    if(image != null) {
+	    	newImg = new BufferedImage(dWidth, dHeight, BufferedImage.TYPE_INT_RGB);
+	        Graphics2D g = newImg.createGraphics();
+	        g.drawImage(image, 0, 0, dWidth, dHeight, null);
 	        g.dispose();
 	    }
-	    return dbi;
+	    return newImg;
 	}
 	
 	public static void compressImages(String inDir, String outDir) throws IOException{
@@ -41,9 +41,7 @@ public class ImageProcessor {
 			
 			int dWidth = 200;
 			int dHeight = 160;
-			double factorWidth = dWidth/image.getWidth();
-			double factorHeight = dHeight/image.getHeight();
-			image = ImageProcessor.scale(image, dWidth, dHeight, factorWidth, factorHeight);
+			image = ImageProcessor.scale(image, dWidth, dHeight);
 			
 			File dir = new File(outDir);
 			if (! dir.exists()){
