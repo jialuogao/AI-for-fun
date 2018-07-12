@@ -46,26 +46,28 @@ public class Main {
 		
 		loadInfoDataFile();
 		
-		predict(imageDir);
+		//predict(imageDir);
 		
 		learningRate = 0.01;
 
 		/// Testing for the best accuracy
-//		int versionCount=0;
-//		for(;versionCount<7;versionCount++) {
-//			BufferedWriter writer = new BufferedWriter(new FileWriter(datadir+"result.txt",true));
-//			int maxEpoch = 5;
-//			///
-//			train(maxEpoch);
-//			///
-//			predictAll();
-//			writer.write("Version: "+versionCount+" with max epoch of: "+maxEpoch+" result: Car: "+predCar+" Tree: "+predTree);
-//			writer.newLine();
-//	        writer.write("Accuracy: Car: "+((double)predCar/8041)+" Tree: "+((double)predTree/1181));
-//	        writer.newLine();
-//	        writer.newLine();
-//	        writer.close();
-//		}
+		int versionCount=0;
+		File dirin = new File(testingPosDir);
+		File dirin2 = new File(testingNegDir);
+		for(;versionCount<7;versionCount++) {
+			BufferedWriter writer = new BufferedWriter(new FileWriter(datadir+"result.txt",true));
+			int maxEpoch = 5;
+			///
+			train(maxEpoch);
+			///
+			predictAll();
+			writer.write("Version: "+versionCount+" with max epoch of: "+maxEpoch+" result: Car: "+predCar+" Tree: "+predTree);
+			writer.newLine();
+	        writer.write("Accuracy: Car: "+((double)predCar/dirin.list().length)+" Tree: "+((double)predTree/dirin2.list().length));
+	        writer.newLine();
+	        writer.newLine();
+	        writer.close();
+		}
 	}
 	
 	public static void writeDataFile(boolean isTraining) throws Exception{
@@ -131,6 +133,7 @@ public class Main {
 			throw new Exception("No valid info file found");
 		}
 		else {
+			/////////
 			LineNumberReader lineNumReader = new LineNumberReader(new InputStreamReader(new FileInputStream(infoFile)));
 			while ((lineNumReader.readLine()) != null);
 	        int length = lineNumReader.getLineNumber();
@@ -523,7 +526,7 @@ public class Main {
 					}
 				}
 				//TODO: more output node
-				System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
+//				System.out.println("The prediction is: "+(pred == 0 ? "a car":"not a car"));
 				System.out.println(layer[0][0][0]+"  "+layer[0][0][1]);
 				if(!isTraining){
 					predCar += (pred == 0 ? 1:0)*target[0];
