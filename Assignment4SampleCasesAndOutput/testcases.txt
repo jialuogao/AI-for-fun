@@ -1,0 +1,11 @@
+Sample test case #1
+    Command line arguments: 5 0.01 100 0 train1.txt test1.txt
+    Sample output file:     sample_output1.txt
+
+Sample test case #2
+    Command line arguments: 10 0.01 1 0 train1.txt test1.txt
+    Sample output file:     sample_output2.txt
+
+Sample test case #3
+    Command line arguments: 50 0.01 20 0 train1.txt test1.txt
+    Sample output file:     sample_output3.txt

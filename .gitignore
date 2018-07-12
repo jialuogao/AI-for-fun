@@ -1,1 +1,10 @@
-/bin/
+bin/
+
+cars_train/
+cars_test/
+cars_train_compressed/
+cars_train_compressed_full/
+cars_test_compressed/
+trees_train/
+trees_train_compressed/
+test.java
