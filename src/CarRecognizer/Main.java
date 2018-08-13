@@ -47,7 +47,7 @@ public class Main {
 		loadInfoDataFile();
 		
 		//predict(imageDir);
-		
+		//predictAll();
 		learningRate = 0.01;
 
 		/// Testing for the best accuracy
@@ -158,6 +158,10 @@ public class Main {
 				layerNum++;
 			}
 		}
+		//set default weights
+		for(int i = 0; i<info.length;i++) {
+			weights.add(null);
+		}
 		File dataFile = new File(datadir);
 		if (! dataFile.exists()){
 	        dataFile.mkdirs();
@@ -173,9 +177,6 @@ public class Main {
 				//data file present, load data
 				//System.out.println("loading data");
 				init = false;
-				for(int i = 0; i<info.length; i++) {
-					weights.add(null);
-				}
 				for(int layerNum = 0; layerNum<info.length;layerNum++) {
 					String numStr = layerNum+".txt";
 					for(File f: data) {
@@ -272,7 +273,8 @@ public class Main {
         		BufferedImage image = ImageIO.read(inpStream);
         		//TODO: multivariable
         		double[] target = {isCar? 1.0:0.0, isCar? 0.0:1.0};
-        		runNN(image,isTraining,target);
+        		double[][][] layer = imageTo3dDouble(image);
+        		runNN(layer, isTraining, target);
 //        		versionCount++;
 //        		if(versionCount==1000) {
 //        			System.out.println(versionCount);
@@ -284,46 +286,13 @@ public class Main {
         writeDataFile(isTraining);
 	}
 	
-	public static void predict(String testingDir) throws Exception{
-		File test = new File(testingDir);
-    	InputStream inpStream = new BufferedInputStream(new FileInputStream(test));
+	public static BufferedImage fileToImg(File file) throws Exception {
+    	InputStream inpStream = new BufferedInputStream(new FileInputStream(file));
 		BufferedImage image = ImageIO.read(inpStream);
-		image = ImageProcessor.scale(image, 50, 40);
-		double[] target = {0.0, 0.0};
-		runNN(image, false, target);
-    }
-	
-	public static void predictAll() throws Exception{
-		predCar = 0;
-		predTree = 0;
-        File testin1 = new File(testingPosDir);
-        for (File f : testin1.listFiles()) {
-			System.out.println("Current at Car: "+f.getName());
-        	InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
-			BufferedImage image = ImageIO.read(inpStream);
-			double[] target = {1.0, 0.0};
-			runNN(image, false, target);
-        }
-        File testin2 = new File(testingNegDir);
-        for (File f : testin2.listFiles()) {
-    		System.out.println("Current at Tree: "+f.getName());
-			InputStream inpStream = new BufferedInputStream(new FileInputStream(f));
-			BufferedImage image = ImageIO.read(inpStream);
-			double[] target = {0.0, 1.0};
-			runNN(image, false, target);
-        }
-        System.out.println();
-        System.out.println("Prediction finished and here is the result:");
-        System.out.println(predCar+" "+predTree+" "+testin1.list().length+" "+testin2.list().length);
-        System.out.println((double)predCar/testin1.list().length);
-        System.out.println((double)predTree/testin2.list().length);
+		return image;
 	}
 	
-	public static void runNN(BufferedImage img, boolean isTraining, double[] target) throws Exception{
-		//System.out.println("runNN");
-		if(info[0][0][0]!=0) {
-			throw new Exception("Info file error, did not start with an input layer");
-		}
+	public static double[][][] imageTo3dDouble(BufferedImage img) throws Exception{
 		int dWidth = img.getWidth();
 		int dHeight = img.getHeight();
 		double[][][] layer = new double[3][dHeight][dWidth];
@@ -344,10 +313,42 @@ public class Main {
 				}
 			}
 		}
-		if(init) {
-			for(int i = 0; i<info.length;i++) {
-				weights.add(null);
-			}
+		return layer;
+	}
+	
+	public static void predict(File testingfile, double[] target) throws Exception{
+		BufferedImage image = fileToImg(testingfile);
+		image = ImageProcessor.scale(image, 50, 40);
+		double[][][] layer = imageTo3dDouble(image);
+		runNN(layer, false, target);
+    }
+	
+	public static void predictAll() throws Exception{
+		predCar = 0;
+		predTree = 0;
+        File testin1 = new File(testingPosDir);
+        for (File f : testin1.listFiles()) {
+			System.out.println("Current at Car: "+f.getName());
+			double[] target = {1.0, 0.0};
+			predict(f,target);
+        }
+        File testin2 = new File(testingNegDir);
+        for (File f : testin2.listFiles()) {
+    		System.out.println("Current at Tree: "+f.getName());
+			double[] target = {0.0, 1.0};
+			predict(f,target);
+        }
+        System.out.println();
+        System.out.println("Prediction finished and here is the result:");
+        System.out.println(predCar+" "+predTree+" "+testin1.list().length+" "+testin2.list().length);
+        System.out.println((double)predCar/testin1.list().length);
+        System.out.println((double)predTree/testin2.list().length);
+	}
+	
+	public static void runNN(double[][][] layer, boolean isTraining, double[] target) throws Exception{
+		//System.out.println("runNN");
+		if(info[0][0][0]!=0) {
+			throw new Exception("Info file error, did not start with an input layer");
 		}
 		nextLayer(layer,0,isTraining,target);
 	}
