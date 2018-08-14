@@ -1,4 +1,4 @@
-package CarRecognizer;
+package WuZiQi;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -30,8 +30,8 @@ public class Main {
 	//Layer type: 0 Input,1 Convolutional, 2 ReLU, 3 Max Pooling, 4 Full, 5 Output Soft Max, 6 Droop out
 	public static int[][][] info;
 	
-	public static final String infofile = "src/CarRecognizer/Data/infoFile.txt";
-	public static final String datadir = "src/CarRecognizer/Data/";
+	public static final String infofile = "src/WuZiQi/Data/infoFile.txt";
+	public static final String datadir = "src/WuZiQi/Data/";
 	private static Random generator = new Random();
 	//private static Node[][] network;
 	public static ArrayList weights = new ArrayList();
@@ -318,7 +318,6 @@ public class Main {
 	
 	public static void predict(File testingfile, double[] target) throws Exception{
 		BufferedImage image = fileToImg(testingfile);
-		image = ImageProcessor.scale(image, 50, 40);
 		double[][][] layer = imageTo3dDouble(image);
 		runNN(layer, false, target);
     }
